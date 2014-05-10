@@ -1,0 +1,42 @@
+1) Refactor so that DataCanvas is subclass of QMLView. This will
+   make it more re-usable and just pull out the widget wrapping.
+
+2) Start on separation of interface for display layers. Don't worry
+   about plugins, but get rendering handled by separate objects
+
+3a)Bring GDAL into the mix and try to draw some maps
+
+3b)Forgo transforms and try pulling radar data from server (with netcdf)
+   and just draw centered at radar
+
+4) What exactly is our design for adding data displays. Obviously, the
+   QtQuick stuff will control the list of displays, and both it and
+   the data canvas are views on this. But where are the separations for
+   adding data and displays on the data? Does a separation of these
+   two items, make sense? Could this get turned into a full-fledged
+   pipeline? Still need to optimize for the common case: I want to see
+   the data from X.
+
+Longer term:
+* Investigate crashing on exit. Likely due to multi-threaded creation
+  and deletion of OpenGL stuff
+
+* Refactor to try to hide more details of openGL debugging/profiling
+
+* Once we get to solid functionality, need to start adding tests and
+  getting that infrastructure in place
+
+* Hook up clang analyzer? 
+
+* Any other clang, etc. analysis tools?
+
+* Need to develop python plugin API, and all the accompanying
+  infrastructure.
+
+* Can we use Quick animation classes to control animations of data?
+
+* Investigate scenegraph capabilities to see if it would be possible
+  to just use its node classes for our visualization needs...
+
+* Examine the possiblity of using Qt Quick Components or whatnot
+  to do menubars, etc. on desktop. 
