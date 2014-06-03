@@ -13,20 +13,28 @@ QT += core gui widgets quick quickwidgets
 TARGET = wave
 TEMPLATE = app
 
+LIBS += -lgdal
 
 SOURCES += main.cpp\
     mainwindow.cpp \
-    datacanvas.cpp
+    datacanvas.cpp \
+    drawlayer.cpp \
+    projectionview.cpp \
+    maplayer.cpp
 
 HEADERS += mainwindow.h \
-    datacanvas.h
+    datacanvas.h \
+    drawlayer.h \
+    projectionview.h \
+    maplayer.h
 
 FORMS += mainwindow.ui
 
 OTHER_FILES += \
     main.qml \
     simple.frag \
-    simple.vert
+    simple.vert \
+    map.vert
 
 RESOURCES += \
     resources.qrc

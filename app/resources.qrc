@@ -5,5 +5,6 @@
     <qresource prefix="/shaders">
         <file>simple.frag</file>
         <file>simple.vert</file>
+        <file>map.vert</file>
     </qresource>
 </RCC>

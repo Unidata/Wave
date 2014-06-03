@@ -1,37 +1,37 @@
 #ifndef DATACANVAS_H
 #define DATACANVAS_H
 
-#include <QWidget>
+#include <QQuickView>
 
-#include <QOpenGLBuffer>
-#include <QOpenGLVertexArrayObject>
-#include <QSharedPointer>
+#include <memory>
+#include <vector>
 
-class QQuickView;
+#include "drawlayer.h"
+
 class QOpenGLDebugLogger;
 class QOpenGLDebugMessage;
 class QOpenGLFunctions;
-class QOpenGLShaderProgram;
 class QOpenGLTimeMonitor;
 
-typedef QSharedPointer<QOpenGLShaderProgram> QOpenGLShaderProgramPtr;
+typedef std::unique_ptr<DrawLayer> DrawLayerPtr;
+typedef std::vector<DrawLayerPtr> LayerStore;
 
-class DataCanvas : public QWidget
+class DataCanvas : public QQuickView
 {
     Q_OBJECT
 
-    QOpenGLBuffer verts, colors;
-    QOpenGLVertexArrayObject vao;
-    QOpenGLShaderProgramPtr prog;
-    QQuickView *qmlView;
     QOpenGLFunctions *funcs;
     QOpenGLDebugLogger *logger;
     QOpenGLTimeMonitor *monitor;
+    bool glInitialized;
 
-    void glMessage(const QString &msg);
+    LayerStore layers;
 
 public:
-    explicit DataCanvas(QWidget *parent = 0);
+    explicit DataCanvas();
+    void glMessage(const QString &msg);
+    QOpenGLFunctions* glFuncs() const { return funcs; }
+    void addLayer(DrawLayer *layer);
 
 signals:
 

@@ -1,9 +1,3 @@
-1) Refactor so that DataCanvas is subclass of QMLView. This will
-   make it more re-usable and just pull out the widget wrapping.
-
-2) Start on separation of interface for display layers. Don't worry
-   about plugins, but get rendering handled by separate objects
-
 3a)Bring GDAL into the mix and try to draw some maps
 
 3b)Forgo transforms and try pulling radar data from server (with netcdf)
@@ -16,6 +10,10 @@
    two items, make sense? Could this get turned into a full-fledged
    pipeline? Still need to optimize for the common case: I want to see
    the data from X.
+
+5) How exactly should things be abstracted to handle getting better
+   desktop performance with OpenGL 4.x while being able to fallback
+   to OpenGL 2.x?
 
 Longer term:
 * Investigate crashing on exit. Likely due to multi-threaded creation

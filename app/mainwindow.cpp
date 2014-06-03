@@ -11,8 +11,16 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(ui->actionQuit, &QAction::triggered, qApp, &QApplication::quit);
-    auto view = new DataCanvas(this);
-    setCentralWidget(view);
+
+    // Create a widget container for the view and add to a layout. The container
+    // takes ownership of the view.
+    auto view = new DataCanvas;
+    auto container = createWindowContainer(view, this);
+//    auto layout = new QHBoxLayout(this);
+//    layout->setMargin(20);
+//    layout->addWidget(container);
+
+    setCentralWidget(container);
 }
 
 MainWindow::~MainWindow()
