@@ -15,6 +15,11 @@ QOpenGLFunctions* DrawLayer::glFuncs() const
     return static_cast<DataCanvas*>(parent())->glFuncs();
 }
 
+const ProjectionView& DrawLayer::projection() const
+{
+    return static_cast<DataCanvas*>(parent())->projection();
+}
+
 void DrawLayer::draw()
 {
     prog->bind();
@@ -104,11 +109,11 @@ void DrawLayer::init()
     prog->release();
 }
 
-void DrawLayer::cleanup()
+void DrawLayer::cleanUp()
 {
-//    vao.destroy();
-//    verts.destroy();
-//    colors.destroy();
-//    prog.reset();
+    vao.destroy();
+    verts.destroy();
+    colors.destroy();
+    prog.reset();
 }
 

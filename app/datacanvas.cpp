@@ -15,7 +15,8 @@ DataCanvas::DataCanvas()
       funcs(nullptr),
       logger(new QOpenGLDebugLogger(this)),
       monitor(new QOpenGLTimeMonitor(this)),
-      glInitialized(false)
+      glInitialized(false),
+      dragging(false)
 {
     // Set up OpenGL Context
     QSurfaceFormat fmt(QSurfaceFormat::DebugContext);
@@ -43,11 +44,59 @@ DataCanvas::DataCanvas()
 
     addLayer(new DrawLayer(this));
     addLayer(new MapLayer(this));
+
+    proj.setScreenSize(size());
 }
 
 void DataCanvas::addLayer(DrawLayer* layer)
 {
     layers.push_back(std::move(DrawLayerPtr(layer)));
+    connect(this, &QQuickView::sceneGraphInitialized,
+            layer, &DrawLayer::init, Qt::DirectConnection);
+    connect(this, &QQuickView::sceneGraphInvalidated,
+            layer, &DrawLayer::cleanUp, Qt::DirectConnection);
+}
+
+void DataCanvas::mousePressEvent(QMouseEvent *ev)
+{
+    if (ev->button() == Qt::LeftButton)
+    {
+        dragging = true;
+        dragPoint = ev->pos();
+    }
+}
+
+void DataCanvas::mouseReleaseEvent(QMouseEvent *ev)
+{
+    if (ev->button() == Qt::LeftButton)
+    {
+        dragging = false;
+    }
+}
+
+void DataCanvas::mouseMoveEvent(QMouseEvent *ev)
+{
+    if (dragging)
+    {
+        proj.shift(dragPoint - ev->pos());
+        dragPoint = ev->pos();
+        update();
+    }
+}
+
+void DataCanvas::wheelEvent(QWheelEvent *ev)
+{
+    if (ev->angleDelta().y() > 0.f)
+        proj.zoomIn();
+    else
+        proj.zoomOut();
+
+    update();
+}
+
+void DataCanvas::resizeEvent(QResizeEvent *ev)
+{
+    proj.setScreenSize(ev->size());
 }
 
 void DataCanvas::renderGL()
@@ -105,17 +154,11 @@ void DataCanvas::initGL()
 //    {
 //        qWarning() << "Error creating timer query object";
 //    }
-
-    for (auto& layer: layers)
-        layer->init();
-
 }
 
 void DataCanvas::cleanUpGL()
 {
-    qDebug() << "cleanUpGL";
-    for (auto& layer: layers)
-        layer->cleanup();
+    glInitialized = false;
 }
 
 void DataCanvas::logMessage(const QOpenGLDebugMessage &msg)

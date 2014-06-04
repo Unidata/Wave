@@ -3,63 +3,41 @@
 #include <QDebug>
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
+#include <QRectF>
 
-
-#include "gdal/ogrsf_frmts.h"
-
-typedef  struct {
-    uint  count;
-    uint  instanceCount;
-    uint  first;
-    uint  baseInstance;
-} DrawArraysIndirectCommand;
+#include "ogrtools.h"
+#include "projectionview.h"
 
 MapLayer::MapLayer(DataCanvas* parent) :
-    DrawLayer(parent)
+    DrawLayer(parent),
+    newFile(false)
 {
     OGRRegisterAll();
+    loadFile(QLatin1Literal("/home/rmay/maps/tl_2013_us_state.shp"));
+}
 
-    OGRDataSource* ds;
-    ds = OGRSFDriverRegistrar::Open("/home/rmay/maps/tl_2013_us_state.shp",
-                                    false);
-
-    OGRLayer* layer = ds->GetLayerByName("tl_2013_us_state");
-    OGRFeatureDefn* def = layer->GetLayerDefn();
-    qDebug() << layer->GetFeatureCount();
-    OGRFeature* feat;
-    while ((feat = layer->GetNextFeature()) != nullptr)
+void MapLayer::loadFile(const QString& fname)
+{
+    auto fileInfo = extractAllPoints(fname, projection().transGeogToProj());
+    vertData = std::move(fileInfo.verts);
+    indirData.clear();
+    indirData.reserve(fileInfo.counts.size());
+    for (size_t i=0; i < fileInfo.counts.size(); ++i)
     {
-        OGRGeometry* geom = feat->GetGeometryRef();
-        for (int i = 0; i < def->GetFieldCount(); ++i)
-        {
-            OGRFieldDefn* fdef = def->GetFieldDefn(i);
-            switch (fdef->GetType())
-            {
-            case OFTInteger:
-                qDebug() << fdef->GetNameRef() << feat->GetFieldAsInteger(i);
-                break;
-            case OFTReal:
-                qDebug() << fdef->GetNameRef() << feat->GetFieldAsDouble(i);
-                break;
-            case OFTString:
-                qDebug() << fdef->GetNameRef() << feat->GetFieldAsString(i);
-                break;
-            default:
-                qDebug() << "Unknown type:" << fdef->GetType();
-            }
-        }
-        qDebug() << "-----";
+        indirData.push_back({fileInfo.counts[i], 1, fileInfo.starts[i], 1});
     }
+    newFile = true;
 }
 
 void MapLayer::draw()
 {
+    if (newFile)
+        mapToGL();
+
     prog->bind();
 
-    QMatrix4x4 mvpMatrix;
-    mvpMatrix.ortho(-10.f, 10.f, -10.f, 10.f, -10.f, 10.f);
-    prog->setUniformValue("mvp", mvpMatrix);
-    prog->setUniformValue("color", QVector4D(0.2f, 1.0f, 1.0f, 1.0f));
+    prog->setUniformValue("mvp", projection().viewMatrix());
+    prog->setUniformValue("color", m_color);
 
     // Separate block for handling binding/release of VAO
     {
@@ -69,7 +47,7 @@ void MapLayer::draw()
 //        GLint count[2] = {3, 2};
 //        funcs->glMultiDrawArrays(GL_LINE_STRIP, first, count, 2);
         funcs->glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirect.bufferId());
-        funcs->glMultiDrawArraysIndirect(GL_LINE_STRIP, 0, 2, 0);
+        funcs->glMultiDrawArraysIndirect(GL_LINE_STRIP, 0, indirData.size(), 0);
         funcs->glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
     }
 
@@ -108,42 +86,55 @@ void MapLayer::init()
     }
 
     vao.create();
-    {
-        QOpenGLVertexArrayObject::Binder bind(&vao);
-
-        verts.setUsagePattern(QOpenGLBuffer::StaticDraw);
-        if (!verts.create())
-        {
-            qWarning() << "Error creating vertex buffer";
-        }
-        else
-        {
-            std::vector<QVector2D> vertData = {{-2., 0.}, {2., 0.}, {0., 2.}, {-5., 4.}, {-5, -4.}};
-            verts.bind();
-            verts.allocate(vertData.data(), vertData.size() * sizeof(QVector2D));
-            prog->enableAttributeArray("vertex");
-            prog->setAttributeBuffer("vertex", GL_FLOAT, 0, 2);
-            verts.release();
-        }
-
-        indirect.setUsagePattern(QOpenGLBuffer::StaticDraw);
-        if (!indirect.create())
-        {
-            qWarning() << "Error creating vertex buffer";
-        }
-        else
-        {
-            std::vector<DrawArraysIndirectCommand> indirData = {{3, 1, 0, 1},
-                                                                {2, 1, 3, 1}};
-            glFuncs()->glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirect.bufferId());
-//            indirect.allocate(indirData.data(),
-//                              indirData.size() * sizeof(DrawArraysIndirectCommand));
-            funcs->glBufferData(GL_DRAW_INDIRECT_BUFFER,
-                                8 * sizeof(GLint),
-                                indirData.data(), GL_STATIC_DRAW);
-            glFuncs()->glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
-        }
-    }
 
     prog->release();
+}
+
+void MapLayer::mapToGL()
+{
+    newFile = false;
+    QOpenGLVertexArrayObject::Binder bind(&vao);
+
+    verts.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    if (!verts.create())
+    {
+        qWarning() << "Error creating vertex buffer";
+    }
+    else
+    {
+        verts.bind();
+        verts.allocate(vertData.data(), vertData.size() * sizeof(QVector2D));
+        prog->enableAttributeArray("vertex");
+        prog->setAttributeBuffer("vertex", GL_FLOAT, 0, 2);
+        verts.release();
+    }
+
+    indirect.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    if (!indirect.create())
+    {
+        qWarning() << "Error creating vertex buffer";
+    }
+    else
+    {
+        funcs->glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirect.bufferId());
+        funcs->glBufferData(GL_DRAW_INDIRECT_BUFFER,
+                            indirData.size() * sizeof(DrawArraysIndirectCommand),
+                            indirData.data(), GL_STATIC_DRAW);
+        funcs->glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+    }
+}
+
+void MapLayer::cleanUp()
+{
+    verts.destroy();
+    indirect.destroy();
+    prog.reset();
+}
+
+void MapLayer::setColor(QColor arg)
+{
+    if (m_color != arg) {
+        m_color = arg;
+        emit colorChanged(arg);
+    }
 }

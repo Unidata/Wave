@@ -20,13 +20,15 @@ SOURCES += main.cpp\
     datacanvas.cpp \
     drawlayer.cpp \
     projectionview.cpp \
-    maplayer.cpp
+    maplayer.cpp \
+    ogrtools.cpp
 
 HEADERS += mainwindow.h \
     datacanvas.h \
     drawlayer.h \
     projectionview.h \
-    maplayer.h
+    maplayer.h \
+    ogrtools.h
 
 FORMS += mainwindow.ui
 

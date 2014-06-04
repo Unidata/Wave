@@ -11,6 +11,7 @@ class QOpenGLShaderProgram;
 class QOpenGLFunctions;
 
 class DataCanvas;
+class ProjectionView;
 
 typedef QSharedPointer<QOpenGLShaderProgram> QOpenGLShaderProgramPtr;
 
@@ -25,12 +26,13 @@ class DrawLayer : public QObject
 public:
     virtual void draw();
     virtual void init();
-    virtual void cleanup();
+    virtual void cleanUp();
 
     explicit DrawLayer(DataCanvas *parent = 0);
 
 protected:
     QOpenGLFunctions* glFuncs() const;
+    const ProjectionView &projection() const;
 
 signals:
 

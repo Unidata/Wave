@@ -7,13 +7,22 @@
 #include <vector>
 
 #include "drawlayer.h"
+#include "projectionview.h"
 
 class QOpenGLDebugLogger;
 class QOpenGLDebugMessage;
 class QOpenGLFunctions;
 class QOpenGLTimeMonitor;
 
-typedef std::unique_ptr<DrawLayer> DrawLayerPtr;
+struct DeleteLater
+{
+    void operator()(QObject *p) const
+    {
+        p->deleteLater();
+    }
+};
+
+typedef std::unique_ptr<DrawLayer, DeleteLater> DrawLayerPtr;
 typedef std::vector<DrawLayerPtr> LayerStore;
 
 class DataCanvas : public QQuickView
@@ -23,15 +32,26 @@ class DataCanvas : public QQuickView
     QOpenGLFunctions *funcs;
     QOpenGLDebugLogger *logger;
     QOpenGLTimeMonitor *monitor;
-    bool glInitialized;
+    bool glInitialized, dragging;
+    QPoint dragPoint;
 
     LayerStore layers;
+    ProjectionView proj;
 
 public:
     explicit DataCanvas();
     void glMessage(const QString &msg);
-    QOpenGLFunctions* glFuncs() const { return funcs; }
     void addLayer(DrawLayer *layer);
+
+    QOpenGLFunctions* glFuncs() const { return funcs; }
+    const ProjectionView& projection() const { return proj; }
+
+protected:
+    void mouseMoveEvent(QMouseEvent *ev) override;
+    void wheelEvent(QWheelEvent *ev) override;
+    void mousePressEvent(QMouseEvent *ev) override;
+    void mouseReleaseEvent(QMouseEvent *ev) override;
+    void resizeEvent(QResizeEvent *ev) override;
 
 signals:
 
