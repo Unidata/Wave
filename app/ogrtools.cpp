@@ -44,38 +44,53 @@ void countGeometry(OGRPolygon* poly, size_t &points, size_t &geom)
     }
 }
 
+void countGeometry(OGRLineString* line, size_t &points, size_t &geom)
+{
+    geom++;
+    points += line->getNumPoints();
+}
+
+void countGeometry(OGRGeometry* geom, size_t &numPoints, size_t &numObj)
+{
+    switch (geom->getGeometryType())
+    {
+    case wkbPolygon:
+    {
+        countGeometry(static_cast<OGRPolygon*>(geom), numPoints, numObj);
+        break;
+    }
+    case wkbLineString:
+    {
+        countGeometry(static_cast<OGRLineString*>(geom), numPoints, numObj);
+        break;
+    }
+    case wkbMultiPolygon:
+    case wkbMultiLineString:
+    {
+        auto coll = static_cast<OGRGeometryCollection*>(geom);
+        for (int i = 0; i < coll->getNumGeometries(); ++i)
+        {
+            countGeometry(coll->getGeometryRef(i), numPoints, numObj);
+        }
+        break;
+    }
+    default:
+        qWarning() << "Unhandled geometry type:" << geom->getGeometryName();
+    }
+}
+
 std::tuple<size_t, size_t> countGeometry(OGRLayer* layer)
 {
     FeaturePtr feat;
     size_t numVerts = 0, numObj = 0;
     while ((feat = FeaturePtr(layer->GetNextFeature())) != nullptr)
     {
-        auto geom = feat->GetGeometryRef();
-        switch (geom->getGeometryType())
-        {
-        case wkbPolygon:
-        {
-            countGeometry(static_cast<OGRPolygon*>(geom), numVerts, numObj);
-            break;
-        }
-        case wkbMultiPolygon:
-        {
-            auto mpoly = static_cast<OGRMultiPolygon*>(geom);
-            for (int i = 0; i < mpoly->getNumGeometries(); ++i)
-            {
-                countGeometry(static_cast<OGRPolygon*>(mpoly->getGeometryRef(i)),
-                              numVerts, numObj);
-            }
-            break;
-        }
-        default:
-            qWarning() << "Unhandled geometry type:" << geom->getGeometryName();
-        }
+        countGeometry(feat->GetGeometryRef(), numVerts, numObj);
     }
     return std::tuple<size_t, size_t>{numVerts, numObj};
 }
 
-void extractGeometry(OGRLinearRing *ring, FeatureInfo& info)
+void extractGeometry(const OGRLineString *ring, FeatureInfo& info)
 {
     info.starts.push_back(info.verts.size());
     info.counts.push_back(ring->getNumPoints());
@@ -85,12 +100,41 @@ void extractGeometry(OGRLinearRing *ring, FeatureInfo& info)
     }
 }
 
-void extractGeometry(OGRPolygon *poly, FeatureInfo& info)
+void extractGeometry(const OGRPolygon *poly, FeatureInfo& info)
 {
     extractGeometry(poly->getExteriorRing(), info);
     for (int i = 0; i < poly->getNumInteriorRings(); ++i)
     {
         extractGeometry(poly->getInteriorRing(i), info);
+    }
+}
+
+void extractGeometry(const OGRGeometry *geom, FeatureInfo& info)
+{
+    switch (geom->getGeometryType())
+    {
+    case wkbPolygon:
+    {
+        extractGeometry(static_cast<const OGRPolygon*>(geom), info);
+        break;
+    }
+    case wkbLineString:
+    {
+        extractGeometry(static_cast<const OGRLineString*>(geom), info);
+        break;
+    }
+    case wkbMultiLineString:
+    case wkbMultiPolygon:
+    {
+        auto coll = static_cast<const OGRGeometryCollection*>(geom);
+        for (int i = 0; i < coll->getNumGeometries(); ++i)
+        {
+            extractGeometry(coll->getGeometryRef(i), info);
+        }
+        break;
+    }
+    default:
+        qWarning() << "Unhandled geometry type:" << geom->getGeometryName();
     }
 }
 
@@ -102,26 +146,7 @@ void extractGeometry(OGRLayer *layer, OGRCoordinateTransformation* trans,
     {
         auto geom = feat->GetGeometryRef();
         geom->transform(trans);
-        switch (geom->getGeometryType())
-        {
-        case wkbPolygon:
-        {
-            extractGeometry(static_cast<OGRPolygon*>(geom), info);
-            break;
-        }
-        case wkbMultiPolygon:
-        {
-            auto mpoly = static_cast<OGRMultiPolygon*>(geom);
-            for (int i = 0; i < mpoly->getNumGeometries(); ++i)
-            {
-                extractGeometry(static_cast<OGRPolygon*>(mpoly->getGeometryRef(i)),
-                                info);
-            }
-            break;
-        }
-        default:
-            qWarning() << "Unhandled geometry type:" << geom->getGeometryName();
-        }
+        extractGeometry(geom, info);
     }
 }
 
