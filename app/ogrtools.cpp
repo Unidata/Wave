@@ -127,22 +127,29 @@ void extractGeometry(OGRLayer *layer, OGRCoordinateTransformation* trans,
 
 FeatureInfo extractAllPoints(const QString& fname, OGRCoordinateTransformation *trans)
 {
-    DataSourcePtr ds(OGRSFDriverRegistrar::Open(fname.toLocal8Bit(), false));
-
-    size_t verts, objs;
-    auto layer = ds->GetLayer(0);
-    layer->ResetReading();
-    std::tie(verts, objs) = countGeometry(layer);
-    qDebug() << "Points:" << verts << "Objects:" << objs;
-
-    // Initialize the info
     FeatureInfo ret = FeatureInfo();
-    ret.verts.reserve(verts);
-    ret.starts.reserve(objs);
-    ret.counts.reserve(objs);
 
-    layer->ResetReading();
-    extractGeometry(layer, trans, ret);
+    DataSourcePtr ds(OGRSFDriverRegistrar::Open(fname.toLocal8Bit(), false));
+    if (ds == nullptr)
+    {
+        qWarning() << "Error opening file:" << fname;
+    }
+    else
+    {
+        size_t verts, objs;
+        auto layer = ds->GetLayer(0);
+        layer->ResetReading();
+        std::tie(verts, objs) = countGeometry(layer);
+        qDebug() << "Points:" << verts << "Objects:" << objs;
+
+        // Initialize the info
+        ret.verts.reserve(verts);
+        ret.starts.reserve(objs);
+        ret.counts.reserve(objs);
+
+        layer->ResetReading();
+        extractGeometry(layer, trans, ret);
+    }
 
     return ret;
 }
