@@ -6,15 +6,17 @@ CONFIG += c++11
 
 #QMAKE_CXXFLAGS += -std=c++1y
 
-QT += core gui widgets quick quickwidgets
+QT += core gui widgets quick quickwidgets opengl
 
 TARGET = wave
 TEMPLATE = app
 
-PKGCONFIG += gdal
-
 # Find GDAL libs on system
 LIBS += $$system(gdal-config --libs)
+
+# Remove default directories, since having them here screws up
+# linking against OpenGL on linux
+linux: LIBS -= -L/usr/lib64 -L/usr/lib
 
 # Find location of GDAL includes. Need to strip off leading -I to use
 # in INCCLUDEPATH, which we do so that it's also available for Creator
