@@ -16,7 +16,7 @@ class ProjectionView : public QObject
     std::unique_ptr<OGRSpatialReference> geogCoords, projCoords;
     std::unique_ptr<OGRCoordinateTransformation> projTrans, geogTrans;
     QMatrix4x4 projMatrix, mvpMatrix;
-    QPoint m_center;
+    QPointF m_center;
     float m_scale;
 
     void updateMatrix();

@@ -30,11 +30,9 @@ const QMatrix4x4& ProjectionView::viewMatrix() const
 
 void ProjectionView::updateMatrix()
 {
-    mvpMatrix.setToIdentity();
+    mvpMatrix = projMatrix;
+    mvpMatrix.scale(m_scale, m_scale);
     mvpMatrix.translate(m_center.x(), m_center.y());
-    mvpMatrix.scale(m_scale, -m_scale);
-    mvpMatrix *= projMatrix;
-    qDebug() << mvpMatrix;
 }
 
 void ProjectionView::setScale(float scale)
@@ -55,14 +53,15 @@ void ProjectionView::zoomOut()
 
 void ProjectionView::shift(QPoint s)
 {
-    m_center += s / m_scale;
+    m_center -= QPointF(s.x(), -s.y()) / m_scale;
     updateMatrix();
 }
 
 void ProjectionView::setScreenSize(QSize size)
 {
     projMatrix.setToIdentity();
-    projMatrix.ortho(QRectF{QPointF{-size.width() / 2.f, -size.height() / 2.f},
-                            QSizeF{size}});
+    projMatrix.ortho(-size.width() / 2., size.width() / 2.,
+                     -size.height() / 2., size.height() / 2.,
+                     -10., 10.);
     updateMatrix();
 }
