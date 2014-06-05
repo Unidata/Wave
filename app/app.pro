@@ -1,8 +1,6 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2014-04-21T10:18:31
-#
-#-------------------------------------------------
+# Necessary for getting it to build against latest OpenGL headers
+macx: QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
+macx: QMAKE_MAC_SDK = macosx10.9
 
 CONFIG += c++11
 
