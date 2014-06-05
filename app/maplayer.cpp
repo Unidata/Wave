@@ -13,12 +13,12 @@ MapLayer::MapLayer(DataCanvas* parent) :
     newFile(false)
 {
     OGRRegisterAll();
-    loadFile(QLatin1Literal("/home/rmay/maps/tl_2013_us_state.shp"));
+    connect(this, &MapLayer::filenameChanged, this, &MapLayer::loadFile);
 }
 
-void MapLayer::loadFile(const QString& fname)
+void MapLayer::loadFile()
 {
-    auto fileInfo = extractAllPoints(fname, projection().transGeogToProj());
+    auto fileInfo = extractAllPoints(filename(), projection().transGeogToProj());
     vertData = std::move(fileInfo.verts);
     indirData.clear();
     indirData.reserve(fileInfo.counts.size());
@@ -42,10 +42,6 @@ void MapLayer::draw()
     // Separate block for handling binding/release of VAO
     {
         QOpenGLVertexArrayObject::Binder bind(&vao);
-//        glFuncs()->glDrawArrays(GL_LINE_STRIP, 0, 5);
-//        GLint first[2] = {0, 3};
-//        GLint count[2] = {3, 2};
-//        funcs->glMultiDrawArrays(GL_LINE_STRIP, first, count, 2);
         funcs->glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirect.bufferId());
         funcs->glMultiDrawArraysIndirect(GL_LINE_STRIP, 0, indirData.size(), 0);
         funcs->glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
@@ -146,3 +142,12 @@ void MapLayer::setColor(QColor arg)
         emit colorChanged(arg);
     }
 }
+
+void MapLayer::setFilename(QString arg)
+{
+    if (m_filename != arg) {
+        m_filename = arg;
+        emit filenameChanged(arg);
+    }
+}
+

@@ -24,10 +24,6 @@ class DrawLayer : public QObject
     QOpenGLShaderProgramPtr prog;
 
 public:
-    virtual void draw();
-    virtual void init();
-    virtual void cleanUp();
-
     explicit DrawLayer(DataCanvas *parent = 0);
 
 protected:
@@ -37,6 +33,10 @@ protected:
 signals:
 
 public slots:
+    virtual void draw();
+    virtual void init();
+    virtual void cleanUp();
+    virtual void configure(const QVariantMap &config);
 
 };
 

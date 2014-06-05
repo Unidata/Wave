@@ -30,31 +30,42 @@ class MapLayer : public DrawLayer
     QOpenGLFunctions_4_3_Core *funcs;
 
     QColor m_color;
+    QString m_filename;
     bool newFile;
 
     void mapToGL();
+
+private slots:
+    void loadFile();
 
 public:
     explicit MapLayer(DataCanvas *parent = 0);
 
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
+    Q_PROPERTY(QString filename READ filename WRITE setFilename NOTIFY filenameChanged)
 
-    void loadFile(const QString &fname);
 
     QColor color() const
     {
         return m_color;
     }
 
+    QString filename() const
+    {
+        return m_filename;
+    }
+
 signals:
     void colorChanged(QColor arg);
+    void filenameChanged(QString arg);
 
 public slots:
     void draw() override;
     void init() override;
     void cleanUp() override;
-    void setColor(QColor arg);
 
+    void setColor(QColor arg);
+    void setFilename(QString arg);
 };
 
 #endif // MAPLAYER_H

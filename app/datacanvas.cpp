@@ -43,7 +43,19 @@ DataCanvas::DataCanvas()
             this, &DataCanvas::logMessage, Qt::DirectConnection);
 
     addLayer(new DrawLayer(this));
+
     addLayer(new MapLayer(this));
+    QVariantMap config;
+    config["filename"] = "/home/rmay/maps/tl_2013_us_state.shp";
+    layers.back()->configure(config);
+
+    addLayer(new MapLayer(this));
+    config["filename"] = "/home/rmay/maps/tl_2013_us_county.shp";
+    layers.back()->configure(config);
+
+    addLayer(new MapLayer(this));
+    config["filename"] = "/home/rmay/maps/tl_2013_us_primaryroads.shp";
+    layers.back()->configure(config);
 
     proj.setScreenSize(size());
 }

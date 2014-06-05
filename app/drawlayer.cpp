@@ -20,6 +20,14 @@ const ProjectionView& DrawLayer::projection() const
     return static_cast<DataCanvas*>(parent())->projection();
 }
 
+void DrawLayer::configure(const QVariantMap &config)
+{
+    for (const auto& key: config.keys())
+    {
+        this->setProperty(key.toUtf8(), *config.constFind(key));
+    }
+}
+
 void DrawLayer::draw()
 {
     prog->bind();
