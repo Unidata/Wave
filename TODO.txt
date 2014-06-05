@@ -1,12 +1,9 @@
 Bugs:
 
-* Fix display of map data
-* Fix pan
-* Fix build on OSX
 * Fix running on OSX
-* Fix mouse events -- should we be dispatching from large mouse area?
 
 Features/Larger Design:
+* Anti-aliasing
 * Should layers be QQuickItems?
 * Set up Travis-CI
 
@@ -27,9 +24,6 @@ Features/Larger Design:
    to OpenGL 2.x?
 
 Longer term:
-* Investigate crashing on exit. Likely due to multi-threaded creation
-  and deletion of OpenGL stuff
-
 * Refactor to try to hide more details of openGL debugging/profiling
 
 * Once we get to solid functionality, need to start adding tests and
