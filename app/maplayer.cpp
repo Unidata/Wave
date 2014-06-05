@@ -57,7 +57,15 @@ void MapLayer::draw()
 void MapLayer::init()
 {
     funcs = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_4_3_Core>();
-    funcs->initializeOpenGLFunctions();
+    if (!funcs)
+    {
+        qFatal("Could not get pointer to OpenGL 4.3 functions");
+    }
+    else
+    {
+        funcs->initializeOpenGLFunctions();
+    }
+
     // Create shader program -- must be done with correct context active
     prog = QOpenGLShaderProgramPtr(new QOpenGLShaderProgram);
 
