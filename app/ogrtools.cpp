@@ -77,7 +77,7 @@ std::tuple<size_t, size_t> countGeometry(OGRLayer* layer)
 
 void extractGeometry(OGRLinearRing *ring, FeatureInfo& info)
 {
-    info.starts.push_back(info.verts.size() / 2);
+    info.starts.push_back(info.verts.size());
     info.counts.push_back(ring->getNumPoints());
     for (int p = 0; p < ring->getNumPoints(); ++p)
     {
