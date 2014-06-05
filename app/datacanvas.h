@@ -44,7 +44,7 @@ public:
     void addLayer(DrawLayer *layer);
 
     QOpenGLFunctions* glFuncs() const { return funcs; }
-    const ProjectionView& projection() const { return proj; }
+    ProjectionView& projection() { return proj; }
 
 protected:
     void mouseMoveEvent(QMouseEvent *ev) override;

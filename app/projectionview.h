@@ -20,6 +20,7 @@ class ProjectionView : public QObject
     float m_scale;
 
     void updateMatrix();
+    void setupTransforms();
 
 public:
     explicit ProjectionView(QObject *parent = 0);
@@ -28,6 +29,9 @@ public:
 
     const QMatrix4x4 &viewMatrix() const;
     void setScreenSize(QSize size);
+
+    void setGeogCS(OGRSpatialReference *coords);
+    void setProjCS(OGRSpatialReference *coords);
 
 signals:
 

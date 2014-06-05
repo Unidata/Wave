@@ -15,7 +15,7 @@ QOpenGLFunctions* DrawLayer::glFuncs() const
     return static_cast<DataCanvas*>(parent())->glFuncs();
 }
 
-const ProjectionView& DrawLayer::projection() const
+ProjectionView& DrawLayer::projection() const
 {
     return static_cast<DataCanvas*>(parent())->projection();
 }

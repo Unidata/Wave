@@ -14,13 +14,30 @@ ProjectionView::ProjectionView(QObject *parent) :
     geogCoords->SetWellKnownGeogCS("WGS84");
     projCoords->SetEquirectangular(35.f, -97.f, 0.f, 0.f);
     projCoords->SetLinearUnits("Kilometers", 1000.f);
+    setupTransforms();
+
+    m_scale = 1.f;
+    updateMatrix();
+}
+
+void ProjectionView::setupTransforms()
+{
     projTrans = std::unique_ptr<OGRCoordinateTransformation>(
                 OGRCreateCoordinateTransformation(geogCoords.get(), projCoords.get()));
     geogTrans = std::unique_ptr<OGRCoordinateTransformation>(
                 OGRCreateCoordinateTransformation(projCoords.get(), geogCoords.get()));
+}
 
-    m_scale = 1.f;
-    updateMatrix();
+void ProjectionView::setGeogCS(OGRSpatialReference *coords)
+{
+    geogCoords = std::unique_ptr<OGRSpatialReference>(coords);
+    setupTransforms();
+}
+
+void ProjectionView::setProjCS(OGRSpatialReference *coords)
+{
+    projCoords = std::unique_ptr<OGRSpatialReference>(coords);
+    setupTransforms();
 }
 
 const QMatrix4x4& ProjectionView::viewMatrix() const

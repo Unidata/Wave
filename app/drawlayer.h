@@ -28,7 +28,7 @@ public:
 
 protected:
     QOpenGLFunctions* glFuncs() const;
-    const ProjectionView &projection() const;
+    ProjectionView &projection() const;
 
 signals:
 
