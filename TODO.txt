@@ -1,7 +1,18 @@
-3a)Bring GDAL into the mix and try to draw some maps
+Bugs:
 
-3b)Forgo transforms and try pulling radar data from server (with netcdf)
-   and just draw centered at radar
+* Fix display of map data
+* Fix pan
+* Fix build on OSX
+* Fix running on OSX
+* Fix mouse events -- should we be dispatching from large mouse area?
+
+Features/Larger Design:
+* Should layers be QQuickItems?
+* Set up Travis-CI
+
+3a) Plot radar data
+
+3b) Work on plotting hurricane information
 
 4) What exactly is our design for adding data displays. Obviously, the
    QtQuick stuff will control the list of displays, and both it and
