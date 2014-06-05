@@ -1,8 +1,10 @@
 Bugs:
 
 * Fix running on OSX
+* Texture release from raster image
 
 Features/Larger Design:
+* Factor out GDAL wrangling and texture wrangling
 * Anti-aliasing
 * Should layers be QQuickItems?
 * Set up Travis-CI
