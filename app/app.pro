@@ -31,14 +31,16 @@ SOURCES += main.cpp\
     drawlayer.cpp \
     projectionview.cpp \
     maplayer.cpp \
-    ogrtools.cpp
+    ogrtools.cpp \
+    rasterimagelayer.cpp
 
 HEADERS += mainwindow.h \
     datacanvas.h \
     drawlayer.h \
     projectionview.h \
     maplayer.h \
-    ogrtools.h
+    ogrtools.h \
+    rasterimagelayer.h
 
 FORMS += mainwindow.ui
 
@@ -46,7 +48,9 @@ OTHER_FILES += \
     main.qml \
     simple.frag \
     simple.vert \
-    map.vert
+    map.vert \
+    texture.frag \
+    texture.vert
 
 RESOURCES += \
     resources.qrc
