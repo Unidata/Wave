@@ -7,8 +7,8 @@
 #include <QDebug>
 #include <QVector2D>
 
-#include "gdal/ogr_feature.h"
-#include "gdal/ogrsf_frmts.h"
+#include "ogr_feature.h"
+#include "ogrsf_frmts.h"
 
 class OGRCoordinateTransformation;
 

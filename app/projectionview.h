@@ -7,8 +7,7 @@
 
 #include <QMatrix4x4>
 
-#include "gdal/ogr_spatialref.h"
-
+#include "ogr_spatialref.h"
 
 class ProjectionView : public QObject
 {

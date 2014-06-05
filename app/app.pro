@@ -13,7 +13,17 @@ QT += core gui widgets quick quickwidgets
 TARGET = wave
 TEMPLATE = app
 
-LIBS += -lgdal
+PKGCONFIG += gdal
+
+# Find GDAL libs on system
+LIBS += $$system(gdal-config --libs)
+
+# Find location of GDAL includes. Need to strip off leading -I to use
+# in INCCLUDEPATH, which we do so that it's also available for Creator
+# code model
+GDAL_INCLUDES = $$system(gdal-config --cflags)
+GDAL_INCLUDES ~= s/^-I//
+INCLUDEPATH += $$GDAL_INCLUDES
 
 SOURCES += main.cpp\
     mainwindow.cpp \

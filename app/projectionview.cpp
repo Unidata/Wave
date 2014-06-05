@@ -2,7 +2,7 @@
 
 #include <QRectF>
 
-#include "gdal/ogr_spatialref.h"
+#include "ogr_spatialref.h"
 
 const float zoomIncrement = 2.f;
 
