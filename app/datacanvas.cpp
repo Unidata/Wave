@@ -44,17 +44,21 @@ DataCanvas::DataCanvas()
 
     addLayer(new DrawLayer(this));
 
-    addLayer(new MapLayer(this));
     QVariantMap config;
-    config["filename"] = "/home/rmay/maps/tl_2013_us_state.shp";
-    layers.back()->configure(config);
 
     addLayer(new MapLayer(this));
     config["filename"] = "/home/rmay/maps/tl_2013_us_county.shp";
+    config["color"] = "grey";
+    layers.back()->configure(config);
+
+    addLayer(new MapLayer(this));
+    config["filename"] = "/home/rmay/maps/tl_2013_us_state.shp";
+    config["color"] = "black";
     layers.back()->configure(config);
 
     addLayer(new MapLayer(this));
     config["filename"] = "/home/rmay/maps/tl_2013_us_primaryroads.shp";
+    config["color"] = "blue";
     layers.back()->configure(config);
 
     proj.setScreenSize(size());
