@@ -7,6 +7,7 @@
 
 #include "drawlayer.h"
 #include "maplayer.h"
+#include "rasterimagelayer.h"
 
 #include <vector>
 
@@ -42,9 +43,12 @@ DataCanvas::DataCanvas()
     connect(logger, &QOpenGLDebugLogger::messageLogged,
             this, &DataCanvas::logMessage, Qt::DirectConnection);
 
-    addLayer(new DrawLayer(this));
-
     QVariantMap config;
+    addLayer(new RasterImageLayer(this));
+    config["filename"] = "/home/rmay/maps/dnb_land_ocean_ice.2012.3600x1800_geo.tif";
+    layers.back()->configure(config);
+
+    addLayer(new DrawLayer(this));
 
     addLayer(new MapLayer(this));
     config["filename"] = "/home/rmay/maps/tl_2013_us_county.shp";
