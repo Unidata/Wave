@@ -59,43 +59,55 @@ void DataCanvas::addLayer(DrawLayer* layer)
 
 void DataCanvas::mousePressEvent(QMouseEvent *ev)
 {
-    if (ev->button() == Qt::LeftButton)
+    QQuickView::mousePressEvent(ev);
+    if (!ev->isAccepted() && ev->button() == Qt::LeftButton)
     {
         dragging = true;
         dragPoint = ev->pos();
+        ev->accept();
     }
 }
 
 void DataCanvas::mouseReleaseEvent(QMouseEvent *ev)
 {
-    if (ev->button() == Qt::LeftButton)
+    QQuickView::mouseReleaseEvent(ev);
+    if (!ev->isAccepted() && ev->button() == Qt::LeftButton)
     {
         dragging = false;
+        ev->accept();
     }
 }
 
 void DataCanvas::mouseMoveEvent(QMouseEvent *ev)
 {
-    if (dragging)
+    QQuickView::mouseMoveEvent(ev);
+    if (!ev->isAccepted() && dragging)
     {
         proj.shift(dragPoint - ev->pos());
         dragPoint = ev->pos();
+        ev->accept();
         update();
     }
 }
 
 void DataCanvas::wheelEvent(QWheelEvent *ev)
 {
-    if (ev->angleDelta().y() > 0.f)
-        proj.zoomIn();
-    else
-        proj.zoomOut();
+    QQuickView::wheelEvent(ev);
+    if (!ev->isAccepted())
+    {
+        if (ev->angleDelta().y() > 0.f)
+            proj.zoomIn();
+        else
+            proj.zoomOut();
 
-    update();
+        ev->accept();
+        update();
+    }
 }
 
 void DataCanvas::resizeEvent(QResizeEvent *ev)
 {
+    QQuickView::resizeEvent(ev);
     proj.setScreenSize(ev->size());
 }
 
