@@ -50,7 +50,7 @@ void RasterImageLayer::loadFile()
         int numBands = ds->GetRasterCount();
         qDebug() << "Bands:" << numBands;
 
-        imData = QImage(xsize, ysize, QImage::Format_ARGB32);
+        imData = QImage(xsize, ysize, QImage::QImage::Format_RGBA8888);
         imData.fill(QColor(255, 255, 255, 255));
         // Bands start at 1
         for (int i = 1; i <= numBands; ++i)
@@ -59,8 +59,16 @@ void RasterImageLayer::loadFile()
             switch(band->GetColorInterpretation())
             {
             case GCI_RedBand:
+                band->RasterIO(GF_Read, 0, 0, xsize, ysize, imData.bits(),
+                               xsize, ysize, GDT_Byte, 4, 0);
+                break;
+            case GCI_GreenBand:
                 band->RasterIO(GF_Read, 0, 0, xsize, ysize, imData.bits() + 1,
-                               4 * xsize, ysize, GDT_Byte, 0, 0);
+                               xsize, ysize, GDT_Byte, 4, 0);
+                break;
+            case GCI_BlueBand:
+                band->RasterIO(GF_Read, 0, 0, xsize, ysize, imData.bits() + 2,
+                               xsize, ysize, GDT_Byte, 4, 0);
                 break;
             default:
                 qWarning() << "Unhandled color interpretation:" << band->GetColorInterpretation();
