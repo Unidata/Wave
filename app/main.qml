@@ -7,10 +7,10 @@ Item {
         id: obj
         width: 110
         height: 50
-        color: "blue"
+        color: "grey"
         radius: 14
         border.color: "#000000"
-        opacity: 0.4
+        opacity: 0.6
 
         Text {
             id: label

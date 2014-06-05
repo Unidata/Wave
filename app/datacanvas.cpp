@@ -118,8 +118,7 @@ void DataCanvas::renderGL()
 
     auto size = this->size();
     funcs->glViewport(0, 0, size.width(), size.height());
-
-    funcs->glClearColor(1.f, 1.f, 1.f, 1.f);
+    funcs->glClearColor(0.19921875f, 0.44140625f, 0.45703125, 1.f);
     funcs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (auto& layer: layers)
