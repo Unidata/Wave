@@ -47,25 +47,52 @@ DataCanvas::DataCanvas()
 
     QVariantMap config;
     addLayer(new RasterImageLayer(this));
-    config["filename"] = "/home/rmay/maps/dnb_land_ocean_ice.2012.3600x1800_geo.tif";
+//    config["filename"] = "/home/rmay/maps/dnb_land_ocean_ice.2012.3600x1800_geo.tif";
+//    config["filename"] = "/home/rmay/maps/dnb_land_ocean_ice.2012.13500x6750_geo.tif";
+//    config["filename"] = "/home/rmay/maps/world.topo.bathy.200406.3x21600x10800.jpg";
+//    config["filename"] = "/home/rmay/maps/world.200406.3x5400x2700.jpg";
+    config["filename"] = "/home/rmay/maps/world.topo.bathy.200406.3x5400x2700.png";
     layers.back()->configure(config);
+    layers.back()->setObjectName("ImageLayer");
 
     addLayer(new DrawLayer(this));
+    layers.back()->setObjectName("TestLayer");
 
     addLayer(new MapLayer(this));
-    config["filename"] = "/home/rmay/maps/tl_2013_us_county.shp";
-    config["color"] = "grey";
+    config["filename"] = "/home/rmay/maps/GSHHS_shp/f/GSHHS_f_L1.shp";
+    config["color"] = "red";
     layers.back()->configure(config);
+    layers.back()->setObjectName("CoastL1");
 
     addLayer(new MapLayer(this));
-    config["filename"] = "/home/rmay/maps/tl_2013_us_state.shp";
-    config["color"] = "black";
+    config["filename"] = "/home/rmay/maps/GSHHS_shp/f/GSHHS_f_L2.shp";
+    config["color"] = "orange";
     layers.back()->configure(config);
+    layers.back()->setObjectName("CoastL2");
 
     addLayer(new MapLayer(this));
-    config["filename"] = "/home/rmay/maps/tl_2013_us_primaryroads.shp";
-    config["color"] = "blue";
+    config["filename"] = "/home/rmay/maps/WDBII_shp/f/WDBII_border_f_L1.shp";
+    config["color"] = "cyan";
     layers.back()->configure(config);
+    layers.back()->setObjectName("Borders");
+
+//    addLayer(new MapLayer(this));
+//    config["filename"] = "/home/rmay/maps/tl_2013_us_county.shp";
+//    config["color"] = "grey";
+//    layers.back()->configure(config);
+//    layers.back()->setObjectName("Counties");
+
+//    addLayer(new MapLayer(this));
+//    config["filename"] = "/home/rmay/maps/tl_2013_us_state.shp";
+//    config["color"] = "black";
+//    layers.back()->configure(config);
+//    layers.back()->setObjectName("States");
+
+//    addLayer(new MapLayer(this));
+//    config["filename"] = "/home/rmay/maps/tl_2013_us_primaryroads.shp";
+//    config["color"] = "blue";
+//    layers.back()->configure(config);
+//    layers.back()->setObjectName("Roads");
 
     proj.setScreenSize(size());
 }
