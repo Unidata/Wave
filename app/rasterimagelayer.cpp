@@ -32,6 +32,7 @@ void RasterImageLayer::loadFile()
     {
         projection().setGeogCS(new OGRSpatialReference(ds->GetProjectionRef()));
         projection().setProjCS(new OGRSpatialReference(ds->GetProjectionRef()));
+        projection().setDomain({-180., -90., 360., 180.});
 
         std::vector<double> geoTransform(6);
         int xsize = ds->GetRasterXSize();

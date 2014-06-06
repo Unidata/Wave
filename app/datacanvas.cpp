@@ -145,9 +145,9 @@ void DataCanvas::wheelEvent(QWheelEvent *ev)
     if (!ev->isAccepted())
     {
         if (ev->angleDelta().y() > 0.f)
-            proj.zoomIn();
+            proj.zoomInTo(ev->pos());
         else
-            proj.zoomOut();
+            proj.zoomOutFrom(ev->pos());
 
         ev->accept();
         update();
