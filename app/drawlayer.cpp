@@ -88,7 +88,7 @@ void DrawLayer::init()
         }
         else
         {
-            std::vector<QVector2D> vertData{{-1., 0.}, {1., 0.}, {0., 1.}};
+            std::vector<QVector2D> vertData{{-10., 0.}, {-8., 0.}, {-9., 1.}};
             verts.bind();
             verts.allocate(vertData.data(), vertData.size() * sizeof(QVector2D));
             prog->enableAttributeArray("vertex");
