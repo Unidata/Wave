@@ -170,11 +170,14 @@ void DataCanvas::renderGL()
     funcs->glClearColor(0.19921875f, 0.44140625f, 0.45703125, 1.f);
     funcs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    projection().lock();
+
     for (auto& layer: layers)
         layer->draw();
 
     // Query after draw
 //    monitor->recordSample();
+    projection().unlock();
 
     // Get intervals (in nanoseconds)
 //    auto intervals = monitor->waitForIntervals();
@@ -184,6 +187,7 @@ void DataCanvas::renderGL()
     // Reset timer
 //    monitor->reset();
 
+    resetOpenGLState();
     glMessage("end render");
 }
 
