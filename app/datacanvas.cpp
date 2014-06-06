@@ -25,7 +25,7 @@ DataCanvas::DataCanvas()
     fmt.setProfile(QSurfaceFormat::CoreProfile);
     fmt.setStencilBufferSize(8);
     fmt.setSwapBehavior(QSurfaceFormat::TripleBuffer);
-//    fmt.setSamples(16);
+    fmt.setSamples(4);
 
     // Set-up the view
     setSource({"qrc:/qml/main.qml"});
