@@ -162,30 +162,31 @@ void DataCanvas::resizeEvent(QResizeEvent *ev)
 
 void DataCanvas::renderGL()
 {
-    // Start query timer
-//    monitor->recordSample();
-
-    auto size = this->size();
-    funcs->glViewport(0, 0, size.width(), size.height());
+    funcs->glViewport(0, 0, size().width(), size().height());
     funcs->glClearColor(0.19921875f, 0.44140625f, 0.45703125, 1.f);
     funcs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     projection().lock();
 
+    // Start query timer
+    monitor->recordSample();
+
     for (auto& layer: layers)
+    {
         layer->draw();
 
-    // Query after draw
-//    monitor->recordSample();
+        // Query after draw
+        monitor->recordSample();
+    }
     projection().unlock();
 
     // Get intervals (in nanoseconds)
-//    auto intervals = monitor->waitForIntervals();
-//    for (const auto val: intervals)
-//        qDebug() << "Draw took" << val / 1e6 << "ms";
+    auto intervals = monitor->waitForIntervals();
+    for (int i=0; i < intervals.size(); ++i)
+        qDebug() << layers[i]->objectName() << "took" << intervals[i] / 1e6 << "ms";
 
     // Reset timer
-//    monitor->reset();
+    monitor->reset();
 
     resetOpenGLState();
     glMessage("end render");
@@ -214,10 +215,11 @@ void DataCanvas::initGL()
     }
 
     // Set up time monitor
-//    if (!monitor->create())
-//    {
-//        qWarning() << "Error creating timer query object";
-//    }
+    monitor->setSampleCount(layers.size() + 1);
+    if (!monitor->create())
+    {
+        qWarning() << "Error creating timer query object";
+    }
 }
 
 void DataCanvas::cleanUpGL()
