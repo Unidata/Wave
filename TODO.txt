@@ -2,6 +2,8 @@
 
 3b) Work on plotting hurricane information
 
+3c) Need to warp images
+
 4) What exactly is our design for adding data displays. Obviously, the
    QtQuick stuff will control the list of displays, and both it and
    the data canvas are views on this. But where are the separations for
