@@ -6,7 +6,7 @@ CONFIG += c++11
 
 #QMAKE_CXXFLAGS += -std=c++1y
 
-QT += core gui widgets quick quickwidgets opengl
+QT += core gui widgets quick quickwidgets opengl xml
 
 TARGET = wave
 TEMPLATE = app
@@ -32,7 +32,8 @@ SOURCES += main.cpp\
     projectionview.cpp \
     maplayer.cpp \
     ogrtools.cpp \
-    rasterimagelayer.cpp
+    rasterimagelayer.cpp \
+    radarlayer.cpp
 
 HEADERS += mainwindow.h \
     datacanvas.h \
@@ -40,7 +41,8 @@ HEADERS += mainwindow.h \
     projectionview.h \
     maplayer.h \
     ogrtools.h \
-    rasterimagelayer.h
+    rasterimagelayer.h \
+    radarlayer.h
 
 FORMS += mainwindow.ui
 
