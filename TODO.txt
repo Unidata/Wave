@@ -1,14 +1,3 @@
-Bugs:
-
-* Fix running on OSX
-* Texture release from raster image
-
-Features/Larger Design:
-* Factor out GDAL wrangling and texture wrangling
-* Anti-aliasing
-* Should layers be QQuickItems?
-* Set up Travis-CI
-
 3a) Plot radar data
 
 3b) Work on plotting hurricane information
@@ -24,6 +13,36 @@ Features/Larger Design:
 5) How exactly should things be abstracted to handle getting better
    desktop performance with OpenGL 4.x while being able to fallback
    to OpenGL 2.x?
+
+Bugs:
+
+* Fix running on OSX
+* Texture release from raster image
+
+Features/Larger Design:
+* Factor out GDAL wrangling and texture wrangling
+* Anti-aliasing
+* Should layers be QQuickItems?
+* Set up Travis-CI
+* Line width
+
+* Need a data cache and manager
+  - Handle loading datasets in threads
+
+* Need to investigate reducing memory load (esp. on graphics card)
+  by exploiting scale/bounding box. Possibly using a tile-based system
+  using quadtrees/octrees.
+
+* Work projections/camera towards 3D and globe
+
+* UI infrastructure for layers
+
+* Separate layers out into relevant components
+  - Layer as controller: Has UI to select data/control view
+  - Data (model of MVC?)
+  - OpenGL renderer (View of MVC?)
+
+* Settings infrastructure
 
 Longer term:
 * Refactor to try to hide more details of openGL debugging/profiling
