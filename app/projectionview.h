@@ -18,6 +18,7 @@ class ProjectionView : public QObject
     QMatrix4x4 projMatrix, mvpMatrix;
     QPointF m_center;
     float m_scale;
+    bool matrixLocked;
 
     void updateMatrix();
     void setupTransforms();
@@ -32,6 +33,9 @@ public:
 
     void setGeogCS(OGRSpatialReference *coords);
     void setProjCS(OGRSpatialReference *coords);
+
+    void lock();
+    void unlock();
 
 signals:
 

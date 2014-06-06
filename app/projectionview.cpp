@@ -9,7 +9,8 @@ const float zoomIncrement = 2.f;
 ProjectionView::ProjectionView(QObject *parent) :
     QObject(parent),
     geogCoords(new OGRSpatialReference),
-    projCoords(new OGRSpatialReference)
+    projCoords(new OGRSpatialReference),
+    matrixLocked(false)
 {
     geogCoords->SetWellKnownGeogCS("WGS84");
     projCoords->SetEquirectangular(35.f, -97.f, 0.f, 0.f);
@@ -47,9 +48,23 @@ const QMatrix4x4& ProjectionView::viewMatrix() const
 
 void ProjectionView::updateMatrix()
 {
-    mvpMatrix = projMatrix;
-    mvpMatrix.scale(m_scale, m_scale);
-    mvpMatrix.translate(m_center.x(), m_center.y());
+    if (!matrixLocked)
+    {
+        mvpMatrix = projMatrix;
+        mvpMatrix.scale(m_scale, m_scale);
+        mvpMatrix.translate(m_center.x(), m_center.y());
+    }
+}
+
+void ProjectionView::lock()
+{
+    matrixLocked = true;
+}
+
+void ProjectionView::unlock()
+{
+    matrixLocked = false;
+    updateMatrix();
 }
 
 void ProjectionView::setScale(float scale)
