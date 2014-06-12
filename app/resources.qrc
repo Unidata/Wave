@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/qml">
         <file>main.qml</file>
+        <file>label.qml</file>
     </qresource>
     <qresource prefix="/shaders">
         <file>simple.frag</file>

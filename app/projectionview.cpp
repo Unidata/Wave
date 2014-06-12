@@ -6,19 +6,23 @@
 
 static const float zoomIncrement = 1.5f;
 
+static const QRectF worldSpace = {-1.f, -1.f, 2.f, 2.f};
+
 ProjectionView::ProjectionView(QObject *parent) :
     QObject(parent),
     geogCoords(new OGRSpatialReference),
     projCoords(new OGRSpatialReference),
-    matrixLocked(false)
+    zoom(1.f),
+    worldScale(1.f),
+    aspect(1.f),
+    matrixLocked(false),
+    matrixChanged(true)
 {
     geogCoords->SetWellKnownGeogCS("WGS84");
     projCoords->SetEquirectangular(35.f, -97.f, 0.f, 0.f);
     projCoords->SetLinearUnits("Kilometers", 1000.f);
     domain = {-1e3, 1e3, 2e3, 2e3};
     setupTransforms();
-
-    zoom = 1.f;
     updateMatrix();
 }
 
@@ -51,25 +55,37 @@ void ProjectionView::setDomain(QRectF dom)
 void ProjectionView::updateWorldScale()
 {
     // Change to qMax to set limits to fit smallest dimension of domain instead
-    worldScale = qMin(screenSize.width() / domain.width(),
-                      screenSize.height() / domain.height());
+    worldScale = qMin(worldSpace.width() / domain.width(),
+                      aspect * worldSpace.height() / domain.height());
+    matrixChanged = true;
     updateMatrix();
 }
 
-const QMatrix4x4& ProjectionView::viewMatrix() const
-{
-    return mvpMatrix;
-}
 
 void ProjectionView::updateMatrix()
 {
-    if (!matrixLocked)
+    if (!matrixLocked && matrixChanged)
     {
+        projMatrix.setToIdentity();
+        // Bottom/Top flipped on QRect since they assume origin is upper left,
+        // instead of the lower left we gave it.
+        projMatrix.ortho(worldSpace.left(), worldSpace.right(),
+                         aspect * worldSpace.top(), aspect * worldSpace.bottom(),
+                         -10.f, 10.f);
+        projMatrix.scale(scale(), scale(), 1.f);
+
         mvpMatrix = projMatrix;
-        mvpMatrix.scale(scale(), scale());
-        mvpMatrix.translate(m_center.x(), m_center.y());
+        mvpMatrix.lookAt(QVector3D{-m_center.x(), -m_center.y(), 0.f},
+                         QVector3D{-m_center.x(), -m_center.y(), -1.f},
+                         QVector3D{0.f, 1.f, 0.f});
 
         screenToProj = mvpMatrix.inverted() * normMatrix;
+//        projToScreen = normMatrix.inverted() * mvpMatrix;
+        projToScreen = screenToProj.inverted();
+
+        matrixChanged = false;
+        emit viewMatrixChanged(mvpMatrix);
+        emit screenMatrixChanged(projToScreen);
     }
 }
 
@@ -87,6 +103,7 @@ void ProjectionView::unlock()
 float ProjectionView::setZoom(float scale)
 {
     zoom = qBound(1.f, scale, 100.f);
+    matrixChanged = true;
     return zoom;
 }
 
@@ -125,7 +142,7 @@ void ProjectionView::limitCenter()
 {
     // Limit X position within the box
     float totalScale = scale();
-    float scaledWidth = screenSize.width() / totalScale;
+    float scaledWidth = worldSpace.width() / totalScale;
     if (scaledWidth <= domain.width())
     {
         m_center.setX(qBound(domain.left() + 0.5f * scaledWidth,
@@ -140,7 +157,7 @@ void ProjectionView::limitCenter()
     }
 
     // Limit Y position within the box
-    float scaledHeight = screenSize.height() / totalScale;
+    float scaledHeight = worldSpace.height() * aspect / totalScale;
     if (scaledHeight <= domain.height())
     {
         m_center.setY(qBound(domain.top() + 0.5f * scaledHeight,
@@ -153,28 +170,38 @@ void ProjectionView::limitCenter()
                              m_center.y(),
                              domain.top() + 0.5f * scaledHeight));
     }
+    matrixChanged = true;
     updateMatrix();
 }
 
 void ProjectionView::shift(QPoint s)
 {
-    m_center -= QPointF(s.x(), -s.y()) / scale();
+    m_center -= QPointF(s.x(), -s.y()) / (scale() * screenSize.width() / worldSpace.width());
     limitCenter();
 }
 
 void ProjectionView::setScreenSize(QSize size)
 {
-    projMatrix.setToIdentity();
-    projMatrix.ortho(-size.width() / 2., size.width() / 2.,
-                     -size.height() / 2., size.height() / 2.,
-                     -10., 10.);
+    screenSize = size;
+    aspect = static_cast<float>(size.height()) / size.width();
+    updateWorldScale();
+    qDebug() << size << aspect << m_center;
+
+//    projMatrix.setToIdentity();
+//    projMatrix.ortho(-size.width() / 2., size.width() / 2.,
+//                     -size.height() / 2., size.height() / 2.,
+//                     -10., 10.);
+//    projMatrix.ortho(-size.width() / 2., size.width() / 2.,
+//                     -size.height() / 2., size.height() / 2.,
+//                     -10., 10.);
+//    projMatrix.scale(scale(), scale());
 
     // Matrix to generate normalized coordinates in OpenGL space (0,0) center
     // from Qt coordinates, where the lower left is (0,0)
     normMatrix.setToIdentity();
     normMatrix.translate(-1.f, 1.f);
     normMatrix.scale(2.f / size.width(), -2.f / size.height());
-    screenSize = size;
-    updateWorldScale();
+
+    matrixChanged = true;
     limitCenter();
 }

@@ -7,22 +7,108 @@
 #include <QOpenGLShaderProgram>
 
 #include <QDomDocument>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QUrlQuery>
+
+#include <netcdf>
 
 #include "projectionview.h"
+
+using namespace netCDF;
 
 RadarLayer::RadarLayer(DataCanvas *parent) :
     DrawLayer(parent),
     newFile(false),
-    tex(QOpenGLTexture::Target1D)
+    tex(QOpenGLTexture::Target1D),
+    reply(nullptr)
 {
+    connect(this, &RadarLayer::filenameChanged, this, &RadarLayer::loadFile);
 }
 
 
 void RadarLayer::loadFile()
 {
     newFile = false;
+    QUrlQuery query;
+    query.addQueryItem("var", "N0R");
+    query.addQueryItem("stn", "FTG");
+    query.addQueryItem("time", "present");
 
-//    QXMLDoc http://thredds.ucar.edu/thredds/radarServer/nexrad/level3/IDD?var=N0R&stn=FTG&time=present
+    QUrl url;
+    url.setScheme("http");
+    url.setHost("thredds.ucar.edu");
+    url.setPath("/thredds/radarServer/nexrad/level3/IDD");
+    url.setQuery(query);
+    reply = nam.get(QNetworkRequest(url));
+    connect(reply, &QNetworkReply::finished, this, &RadarLayer::httpFinished);
+    connect(reply, &QNetworkReply::readyRead, this, &RadarLayer::httpReadyRead);
+    connect(reply, &QNetworkReply::downloadProgress,
+            this, &RadarLayer::updateDataReadProgress);
+}
+
+void RadarLayer::httpFinished()
+{
+    qDebug() << "httpFinished";
+    reply->deleteLater();
+
+    QDomDocument xml;
+    xml.setContent(buffer);
+    buffer.clear();
+
+    auto elems = xml.elementsByTagName("service");
+    QString entryPoint;
+    for (int i=0; i < elems.count(); ++i)
+    {
+        auto attrs = elems.at(i).attributes();
+        auto serviceName = attrs.namedItem("name").toAttr().value();
+        if (serviceName == "OPENDAP")
+            entryPoint = attrs.namedItem("base").toAttr().value();
+    }
+    qDebug() << entryPoint;
+
+    elems = xml.elementsByTagName("dataset");
+    QStringList paths;
+    for (int i=0; i < elems.count(); ++i)
+    {
+        auto attrs = elems.at(i).attributes();
+        if (attrs.contains("urlPath"))
+        {
+            qDebug() << "dataset:" << attrs.namedItem("name").toAttr().value();
+            paths.append(attrs.namedItem("urlPath").toAttr().value());
+        }
+    }
+    qDebug() << paths;
+
+    QUrl url;
+    url.setScheme("http");
+    url.setHost("thredds.ucar.edu");
+    url.setPath(entryPoint + paths[0]);
+    qDebug() << url;
+
+    try
+    {
+        NcFile nc(url.toString().toStdString(), NcFile::read);
+        for (auto& var : nc.getVars())
+        {
+            qDebug() << var.first.c_str();
+        }
+    }
+    catch (exceptions::NcException& e)
+    {
+        qDebug() << "NetCDF Error:" << e.what();
+    }
+}
+
+void RadarLayer::httpReadyRead()
+{
+    qDebug() << "httpReadyRead";
+    buffer += reply->readAll();
+}
+
+void RadarLayer::updateDataReadProgress(qint64 recv, qint64 total)
+{
+    qDebug() << "downloaded" << recv << "of" << total;
 }
 
 void RadarLayer::makeGL()

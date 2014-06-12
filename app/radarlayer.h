@@ -5,6 +5,7 @@
 
 #include <vector>
 
+#include <QNetworkAccessManager>
 #include <QOpenGLTexture>
 #include <QVector2D>
 
@@ -26,6 +27,9 @@ class RadarLayer : public DrawLayer
     std::vector<QVector2D> vertData;
     std::vector<GLfloat> texData;
     QImage imData;
+    QNetworkAccessManager nam;
+    QNetworkReply *reply;
+    QByteArray buffer;
 
     void makeGL();
 
@@ -50,6 +54,10 @@ public slots:
     void draw() override;
     void init() override;
     void cleanUp() override;
+
+    void httpFinished();
+    void httpReadyRead();
+    void updateDataReadProgress(qint64 recv, qint64 total);
 };
 
 #endif // RADARLAYER_H

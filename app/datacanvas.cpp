@@ -7,6 +7,8 @@
 
 #include "drawlayer.h"
 #include "maplayer.h"
+#include "pointslayer.h"
+#include "radarlayer.h"
 #include "rasterimagelayer.h"
 
 #include <vector>
@@ -76,6 +78,9 @@ DataCanvas::DataCanvas()
     layers.back()->configure(config);
     layers.back()->setObjectName("Borders");
 
+    addLayer(new RadarLayer(this));
+    layers.back()->configure(config);
+    layers.back()->setObjectName("Radar");
 //    addLayer(new MapLayer(this));
 //    config["filename"] = "/home/rmay/maps/tl_2013_us_county.shp";
 //    config["color"] = "grey";
@@ -93,6 +98,9 @@ DataCanvas::DataCanvas()
 //    config["color"] = "blue";
 //    layers.back()->configure(config);
 //    layers.back()->setObjectName("Roads");
+
+    addLayer(new PointsLayer(this));
+    layers.back()->setObjectName("Points");
 
     proj.setScreenSize(size());
 }
@@ -163,6 +171,7 @@ void DataCanvas::resizeEvent(QResizeEvent *ev)
 void DataCanvas::renderGL()
 {
     funcs->glViewport(0, 0, size().width(), size().height());
+    funcs->glDepthRangef(-10.f, 10.f);
     funcs->glClearColor(0.19921875f, 0.44140625f, 0.45703125, 1.f);
     funcs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

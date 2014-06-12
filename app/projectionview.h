@@ -15,12 +15,12 @@ class ProjectionView : public QObject
 
     std::unique_ptr<OGRSpatialReference> geogCoords, projCoords;
     std::unique_ptr<OGRCoordinateTransformation> projTrans, geogTrans;
-    QMatrix4x4 projMatrix, mvpMatrix, normMatrix, screenToProj;
+    QMatrix4x4 projMatrix, mvpMatrix, normMatrix, screenToProj, projToScreen;
     QPointF m_center;
     QRectF domain;
     QSize screenSize;
-    float zoom, worldScale;
-    bool matrixLocked;
+    float zoom, worldScale, aspect;
+    bool matrixLocked, matrixChanged;
 
     void updateMatrix();
     void updateWorldScale();
@@ -33,7 +33,9 @@ public:
 
     OGRCoordinateTransformation* transGeogToProj() const { return projTrans.get(); }
 
-    const QMatrix4x4 &viewMatrix() const;
+    Q_PROPERTY(QMatrix4x4 viewMatrix READ viewMatrix NOTIFY viewMatrixChanged)
+    Q_PROPERTY(QMatrix4x4 screenMatrix READ screenMatrix NOTIFY screenMatrixChanged)
+
     void setScreenSize(QSize size);
 
     void setGeogCS(OGRSpatialReference *coords);
@@ -45,7 +47,19 @@ public:
 
     inline float scale() const { return zoom * worldScale; }
 
+    const QMatrix4x4& viewMatrix() const
+    {
+        return mvpMatrix;
+    }
+
+    const QMatrix4x4& screenMatrix() const
+    {
+        return screenToProj;
+    }
+
 signals:
+    void viewMatrixChanged(QMatrix4x4 arg);
+    void screenMatrixChanged(QMatrix4x4 arg);
 
 public slots:
     float setZoom(float scale);

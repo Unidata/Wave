@@ -13,6 +13,7 @@ TEMPLATE = app
 
 # Find GDAL libs on system
 LIBS += $$system(gdal-config --libs)
+LIBS += $$system(ncxx4-config --libs)
 
 # Remove default directories, since having them here screws up
 # linking against OpenGL on linux
@@ -24,6 +25,7 @@ linux: LIBS -= -L/usr/lib64 -L/usr/lib
 GDAL_INCLUDES = $$system(gdal-config --cflags)
 GDAL_INCLUDES ~= s/^-I//
 INCLUDEPATH += $$GDAL_INCLUDES
+INCLUDEPATH += $$system(ncxx4-config --includedir)
 
 SOURCES += main.cpp\
     mainwindow.cpp \
@@ -33,7 +35,8 @@ SOURCES += main.cpp\
     maplayer.cpp \
     ogrtools.cpp \
     rasterimagelayer.cpp \
-    radarlayer.cpp
+    radarlayer.cpp \
+    pointslayer.cpp
 
 HEADERS += mainwindow.h \
     datacanvas.h \
@@ -42,12 +45,14 @@ HEADERS += mainwindow.h \
     maplayer.h \
     ogrtools.h \
     rasterimagelayer.h \
-    radarlayer.h
+    radarlayer.h \
+    pointslayer.h
 
 FORMS += mainwindow.ui
 
 OTHER_FILES += \
     main.qml \
+    label.qml \
     simple.frag \
     simple.vert \
     map.vert \
