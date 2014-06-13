@@ -179,7 +179,8 @@ void DataCanvas::resizeEvent(QResizeEvent *ev)
 
 void DataCanvas::renderGL()
 {
-    funcs->glViewport(0, 0, size().width() * devicePixelRatio(), size().height() * devicePixelRatio());
+    funcs->glViewport(0, 0, size().width() * devicePixelRatio(),
+                      size().height() * devicePixelRatio());
     funcs->glDepthRangef(-10.f, 10.f);
     funcs->glClearColor(0.19921875f, 0.44140625f, 0.45703125, 1.f);
     funcs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
