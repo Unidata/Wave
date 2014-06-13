@@ -120,7 +120,7 @@ void RasterImageLayer::draw()
     prog->bind();
 
     prog->setUniformValue("mvp", projection().viewMatrix());
-    prog->setUniformValue("texture", 0);
+    prog->setUniformValue("tex", 0);
 
     glEnable(GL_TEXTURE_2D);
 
