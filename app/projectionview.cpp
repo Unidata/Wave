@@ -75,8 +75,8 @@ void ProjectionView::updateMatrix()
         projMatrix.scale(scale(), scale(), 1.f);
 
         mvpMatrix = projMatrix;
-        mvpMatrix.lookAt(QVector3D{-m_center.x(), -m_center.y(), 0.f},
-                         QVector3D{-m_center.x(), -m_center.y(), -1.f},
+        mvpMatrix.lookAt(QVector3D{(float)-m_center.x(), (float)-m_center.y(), 0.f},
+                         QVector3D{(float)-m_center.x(), (float)-m_center.y(), -1.f},
                          QVector3D{0.f, 1.f, 0.f});
 
         screenToProj = mvpMatrix.inverted() * normMatrix;
