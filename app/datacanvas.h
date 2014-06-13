@@ -34,6 +34,7 @@ class DataCanvas : public QQuickView
     QOpenGLTimeMonitor *monitor;
     bool glInitialized, dragging;
     QPoint dragPoint;
+    int wheelDelta;
 
     LayerStore layers;
     ProjectionView proj;

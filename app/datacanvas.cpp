@@ -19,7 +19,8 @@ DataCanvas::DataCanvas()
       logger(new QOpenGLDebugLogger(this)),
       monitor(new QOpenGLTimeMonitor(this)),
       glInitialized(false),
-      dragging(false)
+      dragging(false),
+      wheelDelta(0)
 {
     // Set up OpenGL Context
     QSurfaceFormat fmt(QSurfaceFormat::DebugContext);
@@ -149,13 +150,21 @@ void DataCanvas::mouseMoveEvent(QMouseEvent *ev)
 
 void DataCanvas::wheelEvent(QWheelEvent *ev)
 {
+    static const int wheelZoomStep = 60;
     QQuickView::wheelEvent(ev);
     if (!ev->isAccepted())
     {
-        if (ev->angleDelta().y() > 0.f)
+        wheelDelta += ev->angleDelta().y();
+        if (wheelDelta > wheelZoomStep)
+        {
             proj.zoomInTo(ev->pos());
-        else
+            wheelDelta %= wheelZoomStep;
+        }
+        else if (wheelDelta < -wheelZoomStep)
+        {
             proj.zoomOutFrom(ev->pos());
+            wheelDelta = -(-wheelDelta % wheelZoomStep);
+        }
 
         ev->accept();
         update();
