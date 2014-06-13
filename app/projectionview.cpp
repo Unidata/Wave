@@ -1,6 +1,7 @@
 #include "projectionview.h"
 
 #include <QRectF>
+#include <QVector2D>
 
 #include "ogr_spatialref.h"
 
@@ -12,6 +13,9 @@ ProjectionView::ProjectionView(QObject *parent) :
     QObject(parent),
     geogCoords(new OGRSpatialReference),
     projCoords(new OGRSpatialReference),
+    cameraLoc{0.f, 0.f, 1.f},
+    lookAt{0.f, 0.f, -10.f},
+    up{0.f, 1.f, 0.f},
     zoom(1.f),
     worldScale(1.f),
     aspect(1.f),
@@ -61,7 +65,6 @@ void ProjectionView::updateWorldScale()
     updateMatrix();
 }
 
-
 void ProjectionView::updateMatrix()
 {
     if (!matrixLocked && matrixChanged)
@@ -71,13 +74,11 @@ void ProjectionView::updateMatrix()
         // instead of the lower left we gave it.
         projMatrix.ortho(worldSpace.left(), worldSpace.right(),
                          aspect * worldSpace.top(), aspect * worldSpace.bottom(),
-                         -10.f, 10.f);
-        projMatrix.scale(scale(), scale(), 1.f);
+                         1.f, -1.f);
+        projMatrix.scale(scale(), scale());
 
         mvpMatrix = projMatrix;
-        mvpMatrix.lookAt(QVector3D{(float)-m_center.x(), (float)-m_center.y(), 0.f},
-                         QVector3D{(float)-m_center.x(), (float)-m_center.y(), -1.f},
-                         QVector3D{0.f, 1.f, 0.f});
+        mvpMatrix.lookAt(cameraLoc, lookAt, up);
 
         screenToProj = mvpMatrix.inverted() * normMatrix;
 //        projToScreen = normMatrix.inverted() * mvpMatrix;
@@ -121,9 +122,8 @@ void ProjectionView::zoomOutFrom(QPoint pt)
 
 void ProjectionView::zoomFixedPoint(QPointF pt, float factor)
 {
-    auto mapPoint = screenToProj.map(pt);
-    m_center = (mapPoint + m_center) * factor - mapPoint;
-    limitCenter();
+    QPointF delta = (cameraLoc.toPointF() - screenToProj.map(pt)) * (factor - 1);
+    shift(QVector3D(delta));
 }
 
 void ProjectionView::zoomIn()
@@ -140,19 +140,21 @@ void ProjectionView::zoomOut()
 
 void ProjectionView::limitCenter()
 {
-    // Limit X position within the box
+    QPointF center = cameraLoc.toPointF();
     float totalScale = scale();
+
+    // Limit X position within the box
     float scaledWidth = worldSpace.width() / totalScale;
     if (scaledWidth <= domain.width())
     {
-        m_center.setX(qBound(domain.left() + 0.5f * scaledWidth,
-                             m_center.x(),
+        center.setX(qBound(domain.left() + 0.5f * scaledWidth,
+                             center.x(),
                              domain.right() - 0.5f * scaledWidth));
     }
     else
     {
-        m_center.setX(qBound(domain.right() - 0.5f * scaledWidth,
-                             m_center.x(),
+        center.setX(qBound(domain.right() - 0.5f * scaledWidth,
+                             center.x(),
                              domain.left() + 0.5f * scaledWidth));
     }
 
@@ -160,48 +162,53 @@ void ProjectionView::limitCenter()
     float scaledHeight = worldSpace.height() * aspect / totalScale;
     if (scaledHeight <= domain.height())
     {
-        m_center.setY(qBound(domain.top() + 0.5f * scaledHeight,
-                             m_center.y(),
+        center.setY(qBound(domain.top() + 0.5f * scaledHeight,
+                             center.y(),
                              domain.bottom() - 0.5f * scaledHeight));
     }
     else
     {
-        m_center.setY(qBound(domain.bottom() - 0.5f * scaledHeight,
-                             m_center.y(),
+        center.setY(qBound(domain.bottom() - 0.5f * scaledHeight,
+                             center.y(),
                              domain.top() + 0.5f * scaledHeight));
     }
+    cameraLoc = QVector3D(QVector2D(center), cameraLoc.z());
+    lookAt = QVector3D(QVector2D(center), lookAt.z());
     matrixChanged = true;
     updateMatrix();
 }
 
+void ProjectionView::shift(QVector3D delta)
+{
+    cameraLoc += delta;
+    lookAt += delta;
+    limitCenter();
+}
+
 void ProjectionView::shift(QPoint s)
 {
-    m_center -= QPointF(s.x(), -s.y()) / (scale() * screenSize.width() / worldSpace.width());
-    limitCenter();
+    // Using the conversion from QPoint to QVector4D sets the w component to
+    // 0, which effectively disables the translation aspect of the projection
+    // giving only the scale, which is what we want (since the point coming
+    // in is the amount of shift.
+    shift(QVector3D(screenToProj.map(QVector4D(s))));
 }
 
 void ProjectionView::setScreenSize(QSize size)
 {
-    screenSize = size;
-    aspect = static_cast<float>(size.height()) / size.width();
-    updateWorldScale();
-    qDebug() << size << aspect << m_center;
+    if (size.width() > 0 && size.height() > 0)
+    {
+        aspect = static_cast<float>(size.height()) / size.width();
+        screenSize = size;
+        updateWorldScale();
 
-//    projMatrix.setToIdentity();
-//    projMatrix.ortho(-size.width() / 2., size.width() / 2.,
-//                     -size.height() / 2., size.height() / 2.,
-//                     -10., 10.);
-//    projMatrix.ortho(-size.width() / 2., size.width() / 2.,
-//                     -size.height() / 2., size.height() / 2.,
-//                     -10., 10.);
-//    projMatrix.scale(scale(), scale());
+        // Matrix to generate normalized coordinates in OpenGL space (0,0) center
+        // from Qt coordinates, where the lower left is (0,0)
+        normMatrix.setToIdentity();
+        normMatrix.translate(-1.f, 1.f);
+        normMatrix.scale(2.f / size.width(), -2.f / size.height());
 
-    // Matrix to generate normalized coordinates in OpenGL space (0,0) center
-    // from Qt coordinates, where the lower left is (0,0)
-    normMatrix.setToIdentity();
-    normMatrix.translate(-1.f, 1.f);
-    normMatrix.scale(2.f / size.width(), -2.f / size.height());
-
-    matrixChanged = true;
-    limitCenter();
+        matrixChanged = true;
+        limitCenter();
+    }
 }

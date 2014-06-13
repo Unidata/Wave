@@ -16,9 +16,9 @@ class ProjectionView : public QObject
     std::unique_ptr<OGRSpatialReference> geogCoords, projCoords;
     std::unique_ptr<OGRCoordinateTransformation> projTrans, geogTrans;
     QMatrix4x4 projMatrix, mvpMatrix, normMatrix, screenToProj, projToScreen;
-    QPointF m_center;
     QRectF domain;
     QSize screenSize;
+    QVector3D cameraLoc, lookAt, up;
     float zoom, worldScale, aspect;
     bool matrixLocked, matrixChanged;
 
@@ -27,6 +27,7 @@ class ProjectionView : public QObject
     void setupTransforms();
     void limitCenter();
     void zoomFixedPoint(QPointF pt, float factor);
+    void shift(QVector3D delta);
 
 public:
     explicit ProjectionView(QObject *parent = 0);
