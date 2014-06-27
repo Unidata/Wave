@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <QMatrix4x4>
+#include <QPointF>
 
 #include "ogr_spatialref.h"
 
@@ -56,6 +57,11 @@ public:
     const QMatrix4x4& screenMatrix() const
     {
         return screenToProj;
+    }
+
+    Q_INVOKABLE QPointF transScreenToProj(float x, float y)
+    {
+        return screenToProj.map(QPointF{x, y});
     }
 
 signals:
