@@ -17,7 +17,7 @@ public:
 signals:
 
 public slots:
-    void draw() override;
+//    void draw() override;
 
 };
 

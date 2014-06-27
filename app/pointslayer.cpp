@@ -25,7 +25,6 @@ PointsLayer::PointsLayer(DataCanvas *parent) :
     auto dc = static_cast<DataCanvas*>(parent);
     auto root = dc->rootObject();
 
-    auto base = new QQuickItem(root);
     auto engine = dc->engine();
     dc->rootContext()->setContextProperty("viewProjection", &projection());
     auto com =  new QQmlComponent(engine, QUrl{"qrc:/qml/label.qml"}, this);
@@ -33,23 +32,10 @@ PointsLayer::PointsLayer(DataCanvas *parent) :
     item = qobject_cast<QQuickItem*>(com->create());
     if (item)
     {
-        item->setParentItem(base);
+        item->setParentItem(root);
         item->setVisible(true);
         item->setProperty("text", "testing");
-        item->setPosition({0., 0.});
+        item->setProperty("center", QPointF(0., 0.f));
+//        item->setPosition({-97., 35.});
     }
-}
-
-void PointsLayer::draw()
-{
-//    QQmlListProperty<QQuickTransform> trans;
-//    trans.
-//    trans.append(new GeographicTransform(projection().viewMatrix()));
-//    item->setProperty("transform", trans);
-//    item->setProperty("transform", new GeographicTransform(projection().viewMatrix()));
-//    item->transform() << GeographicTransform(projection().viewMatrix());
-//    auto dc = static_cast<DataCanvas*>(parent());
-//    dc->rootContext()->setContextProperty("geogTransform", projection().viewMatrix());
-//    item->polish();
-    qDebug() << projection().screenMatrix();
 }
