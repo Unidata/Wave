@@ -118,7 +118,7 @@ void DataCanvas::addLayer(DrawLayer* layer)
 void DataCanvas::mousePressEvent(QMouseEvent *ev)
 {
     QQuickView::mousePressEvent(ev);
-    if (!ev->isAccepted() && ev->button() == Qt::LeftButton)
+    if (ev->button() == Qt::LeftButton)
     {
         dragging = true;
         dragPoint = ev->pos();
@@ -129,7 +129,7 @@ void DataCanvas::mousePressEvent(QMouseEvent *ev)
 void DataCanvas::mouseReleaseEvent(QMouseEvent *ev)
 {
     QQuickView::mouseReleaseEvent(ev);
-    if (!ev->isAccepted() && ev->button() == Qt::LeftButton)
+    if (ev->button() == Qt::LeftButton)
     {
         dragging = false;
         ev->accept();
@@ -139,7 +139,7 @@ void DataCanvas::mouseReleaseEvent(QMouseEvent *ev)
 void DataCanvas::mouseMoveEvent(QMouseEvent *ev)
 {
     QQuickView::mouseMoveEvent(ev);
-    if (!ev->isAccepted() && dragging)
+    if (dragging)
     {
         proj.shift(dragPoint - ev->pos());
         dragPoint = ev->pos();
