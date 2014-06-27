@@ -56,7 +56,7 @@ public:
 
     const QMatrix4x4& screenMatrix() const
     {
-        return screenToProj;
+        return projToScreen;
     }
 
     Q_INVOKABLE QPointF transScreenToProj(float x, float y)
