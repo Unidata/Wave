@@ -81,8 +81,18 @@ void ProjectionView::updateMatrix()
         mvpMatrix.lookAt(cameraLoc, lookAt, up);
 
         screenToProj = mvpMatrix.inverted() * normMatrix;
-//        projToScreen = normMatrix.inverted() * mvpMatrix;
         projToScreen = screenToProj.inverted();
+        qDebug() << screenSize;
+        QPoint test{screenSize.width() / 4, screenSize.height() / 4};
+        qDebug() << test;
+        qDebug() << screenToProj.map(test);
+        qDebug() << projToScreen.map(screenToProj.map(test));
+//        float factor = qMin((float)domain.width() / screenSize.width(),
+//                            (float)domain.height() / screenSize.height());
+//        projToScreen.scale(factor / zoom, -factor / zoom);
+//        projToScreen.scale(2.f / (screenSize.width() * scale()),
+//                           -2.f * aspect / (screenSize.height() * scale()));
+        qDebug() << projToScreen;
 
         matrixChanged = false;
         emit viewMatrixChanged(mvpMatrix);
