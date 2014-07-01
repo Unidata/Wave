@@ -6,6 +6,7 @@
 #include <QOpenGLTimeMonitor>
 
 #include "drawlayer.h"
+#include "hurricanelayer.h"
 #include "maplayer.h"
 #include "pointslayer.h"
 #include "radarlayer.h"
@@ -82,6 +83,9 @@ DataCanvas::DataCanvas()
     addLayer(new RadarLayer(this));
     layers.back()->configure(config);
     layers.back()->setObjectName("Radar");
+
+    addLayer(new HurricaneLayer(this));
+    layers.back()->setObjectName("Hurricane");
 //    addLayer(new MapLayer(this));
 //    config["filename"] = "/home/rmay/maps/tl_2013_us_county.shp";
 //    config["color"] = "grey";
@@ -202,7 +206,7 @@ void DataCanvas::renderGL()
     // Get intervals (in nanoseconds)
     auto intervals = monitor->waitForIntervals();
     for (int i=0; i < intervals.size(); ++i)
-        qDebug() << layers[i]->objectName() << "took" << intervals[i] / 1e6 << "ms";
+//        qDebug() << layers[i]->objectName() << "took" << intervals[i] / 1e6 << "ms";
 
     // Reset timer
     monitor->reset();

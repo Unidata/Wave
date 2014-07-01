@@ -36,7 +36,8 @@ SOURCES += main.cpp\
     ogrtools.cpp \
     rasterimagelayer.cpp \
     radarlayer.cpp \
-    pointslayer.cpp
+    pointslayer.cpp \
+    hurricanelayer.cpp
 
 HEADERS += mainwindow.h \
     datacanvas.h \
@@ -46,7 +47,8 @@ HEADERS += mainwindow.h \
     ogrtools.h \
     rasterimagelayer.h \
     radarlayer.h \
-    pointslayer.h
+    pointslayer.h \
+    hurricanelayer.h
 
 FORMS += mainwindow.ui
 
