@@ -20,7 +20,6 @@ class HurricaneLayer : public DrawLayer
     QMap<QString, QString> storms;
     std::vector<QVector2D> track;
     QNetworkReply *reply;
-    bool newData;
     QOpenGLBuffer verts;
     QOpenGLVertexArrayObject vao;
     QOpenGLShaderProgramPtr prog;
@@ -41,7 +40,8 @@ public:
 public slots:
     void draw() override;
     void init() override;
-//    void cleanUp() override;
+    void flushState() override;
+    //    void cleanUp() override;
 };
 
 #endif // HURRICANELAYER_H

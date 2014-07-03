@@ -9,7 +9,6 @@
 
 HurricaneLayer::HurricaneLayer(DataCanvas *parent)
     : DrawLayer(parent),
-      newData(false),
       m_color("light green")
 {
     QUrl url;
@@ -21,25 +20,6 @@ HurricaneLayer::HurricaneLayer(DataCanvas *parent)
     connect(reply, &QNetworkReply::readyRead, this, &HurricaneLayer::readyRead);
     connect(reply, &QNetworkReply::downloadProgress,
             this, &HurricaneLayer::downloadProgress);
-}
-
-void HurricaneLayer::draw()
-{
-    if (newData)
-        makeGL();
-
-    prog->bind();
-
-    prog->setUniformValue("mvp", projection().viewMatrix());
-    prog->setUniformValue("color", m_color);
-
-    // Separate block for handling binding/release of VAO
-    {
-        QOpenGLVertexArrayObject::Binder bind(&vao);
-        glFuncs()->glDrawArrays(GL_LINE_STRIP, 0, track.size());
-    }
-
-    prog->release();
 }
 
 void HurricaneLayer::readyRead()
@@ -84,7 +64,6 @@ void HurricaneLayer::finishedTrack()
     qDebug() << "hurricane track finished";
     reply->deleteLater();
     reply = nullptr;
-    OGRCoordinateTransformation *trans = projection().transGeogToProj();
     for (QString line : QString(buffer).split('\n'))
     {
         auto items = line.split(',');
@@ -93,26 +72,26 @@ void HurricaneLayer::finishedTrack()
             QString lonStr = items[7].trimmed();
             bool flip = lonStr[3] == QChar('W');
             lonStr.truncate(3);
-            double lon = lonStr.toInt() / 10.f;
+            float lon = lonStr.toInt() / 10.f;
             if (flip)
                 lon = -lon;
 
             QString latStr = items[6].trimmed();
             flip = latStr[3] == 'S';
             latStr.truncate(3);
-            double lat = latStr.toInt() / 10.f;
+            float lat = latStr.toInt() / 10.f;
             if (flip)
                 lat = -lat;
 
-            trans->Transform(1, &lon, &lat);
-            track.push_back({static_cast<float>(lon), static_cast<float>(lat)});
+            auto projPoint = projection().projectPoint({lon, lat});
+            track.push_back(QVector2D(projPoint.x(), projPoint.y()));
         }
     }
 
     for (auto point : track)
         qDebug() << point;
     buffer.clear();
-    newData = true;
+    setDirty(true);
 }
 
 void HurricaneLayer::init()
@@ -145,29 +124,44 @@ void HurricaneLayer::init()
     }
 
     vao.create();
+    {
+        QOpenGLVertexArrayObject::Binder bind(&vao);
 
+        verts.setUsagePattern(QOpenGLBuffer::StaticDraw);
+        if (!verts.create())
+        {
+            qWarning() << "Error creating vertex buffer";
+        }
+    }
     prog->release();
 }
 
-void HurricaneLayer::makeGL()
+void HurricaneLayer::flushState()
 {
-    newData = false;
-    QOpenGLVertexArrayObject::Binder bind(&vao);
-
-    // Load vertex data
-    verts.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    if (!verts.create())
+    if (isDirty())
     {
-        qWarning() << "Error creating vertex buffer";
-    }
-    else
-    {
+        QOpenGLVertexArrayObject::Binder bind(&vao);
         verts.bind();
         verts.allocate(track.data(), track.size() * sizeof(QVector2D));
         prog->enableAttributeArray("vertex");
         prog->setAttributeBuffer("vertex", GL_FLOAT, 0, 2);
         verts.release();
+        setDirty(false);
     }
 }
 
+void HurricaneLayer::draw()
+{
+    prog->bind();
 
+    prog->setUniformValue("mvp", projection().viewMatrix());
+    prog->setUniformValue("color", m_color);
+
+    // Separate block for handling binding/release of VAO
+    {
+        QOpenGLVertexArrayObject::Binder bind(&vao);
+        glFuncs()->glDrawArrays(GL_LINE_STRIP, 0, track.size());
+    }
+
+    prog->release();
+}
