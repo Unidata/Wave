@@ -17,7 +17,6 @@ class RadarLayer : public DrawLayer
     Q_OBJECT
 
     QString m_filename;
-    bool newFile;
 
     QOpenGLBuffer verts, texCoords;
     QOpenGLVertexArrayObject vao;
@@ -31,10 +30,9 @@ class RadarLayer : public DrawLayer
     QNetworkReply *reply;
     QByteArray buffer;
 
-    void makeGL();
-
 private slots:
     void loadFile();
+
 public:
     explicit RadarLayer(DataCanvas *parent = 0);
 
@@ -54,6 +52,7 @@ public slots:
     void draw() override;
     void init() override;
     void cleanUp() override;
+    void flushState() override;
 
     void httpFinished();
     void httpReadyRead();

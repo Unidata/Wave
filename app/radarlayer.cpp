@@ -6,6 +6,9 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 
+#include <string>
+#include <vector>
+
 #include <QDomDocument>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -17,9 +20,13 @@
 
 using namespace netCDF;
 
+QDebug operator<<(QDebug dbg, const std::string& str)
+{
+    return dbg << str.c_str();
+}
+
 RadarLayer::RadarLayer(DataCanvas *parent) :
     DrawLayer(parent),
-    newFile(false),
     tex(QOpenGLTexture::Target1D),
     reply(nullptr)
 {
@@ -29,7 +36,6 @@ RadarLayer::RadarLayer(DataCanvas *parent) :
 
 void RadarLayer::loadFile()
 {
-    newFile = false;
     QUrlQuery query;
     query.addQueryItem("var", "N0R");
     query.addQueryItem("stn", "FTG");
@@ -89,10 +95,36 @@ void RadarLayer::httpFinished()
     try
     {
         NcFile nc(url.toString().toStdString(), NcFile::read);
-        for (auto& var : nc.getVars())
+        NcVar data;
+        NcVar latVar = nc.getVar("latitude");
+        std::vector<float> buf(latVar.getDim(0).getSize());
+        latVar.getVar(buf.data());
+        float lat = buf[0];
+
+        NcVar lonVar = nc.getVar("longitude");
+        buf.resize(lonVar.getDim(0).getSize());
+        lonVar.getVar(buf.data());
+        float lon = buf[0];
+
+        QPointF center = projection().projectPoint({lon, lat});
+        qDebug() << center;
+
+        for (auto& varInfo : nc.getVars())
         {
-            qDebug() << var.first.c_str();
+            qDebug() << varInfo.first;
+            NcVar var = varInfo.second;
+            if (var.getDimCount() == 2)
+                data = var;
         }
+
+        auto dims = data.getDims();
+        qDebug() << data.getName();
+        for (NcDim dim : dims)
+            qDebug() << dim.getName();
+
+        auto numAz = nc.getDim("azimuth").getSize();
+        auto numGates = nc.getDim("gate").getSize();
+        setDirty(true);
     }
     catch (exceptions::NcException& e)
     {
@@ -111,27 +143,30 @@ void RadarLayer::updateDataReadProgress(qint64 recv, qint64 total)
     qDebug() << "downloaded" << recv << "of" << total;
 }
 
-void RadarLayer::makeGL()
+void RadarLayer::flushState()
 {
-    newFile = false;
-    QOpenGLVertexArrayObject::Binder bind(&vao);
+    if(isDirty())
+    {
+        QOpenGLVertexArrayObject::Binder bind(&vao);
 
-    // Load vertex data
-    verts.bind();
-    verts.allocate(vertData.data(), vertData.size() * sizeof(QVector2D));
-    prog->enableAttributeArray("vertex");
-    prog->setAttributeBuffer("vertex", GL_FLOAT, 0, 2);
-    verts.release();
+        // Load vertex data
+        verts.bind();
+        verts.allocate(vertData.data(), vertData.size() * sizeof(QVector2D));
+        prog->enableAttributeArray("vertex");
+        prog->setAttributeBuffer("vertex", GL_FLOAT, 0, 2);
+        verts.release();
 
-    // Load texture coords
-    texCoords.bind();
-    texCoords.allocate(texData.data(), texData.size() * sizeof(GLfloat));
-    prog->enableAttributeArray("texc");
-    prog->setAttributeBuffer("texc", GL_FLOAT, 0, 1);
-    texCoords.release();
+        // Load texture coords
+        texCoords.bind();
+        texCoords.allocate(texData.data(), texData.size() * sizeof(GLfloat));
+        prog->enableAttributeArray("texc");
+        prog->setAttributeBuffer("texc", GL_FLOAT, 0, 1);
+        texCoords.release();
 
-    // Load texture
-//    tex.setData(imData);
+        // Load texture
+    //    tex.setData(imData);
+        setDirty(false);
+    }
 }
 
 void RadarLayer::setFilename(QString arg)
@@ -144,9 +179,6 @@ void RadarLayer::setFilename(QString arg)
 
 void RadarLayer::draw()
 {
-    if (newFile)
-        makeGL();
-
     prog->bind();
 
     prog->setUniformValue("mvp", projection().viewMatrix());
