@@ -111,6 +111,14 @@ void ProjectionView::unlock()
     updateMatrix();
 }
 
+QPointF ProjectionView::projectPoint(QPointF latlon)
+{
+    double lon = latlon.x();
+    double lat = latlon.y();
+    projTrans->Transform(1, &lon, &lat);
+    return QPointF(lon, lat);
+}
+
 float ProjectionView::setZoom(float scale)
 {
     zoom = qBound(1.f, scale, 100.f);

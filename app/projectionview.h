@@ -64,6 +64,8 @@ public:
         return screenToProj.map(QPointF{x, y});
     }
 
+    QPointF projectPoint(QPointF latlon);
+
 signals:
     void viewMatrixChanged(QMatrix4x4 arg);
     void screenMatrixChanged(QMatrix4x4 arg);
