@@ -36,7 +36,7 @@ Item {
 
         Connections {
             target: viewProjection
-            onScreenMatrixChanged: obj.updateText()
+            onScreenMatrixChanged: screenPoint.updateText()
         }
 
         onXChanged: updateText()
