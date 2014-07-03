@@ -6,8 +6,16 @@
 #include "datacanvas.h"
 
 DrawLayer::DrawLayer(DataCanvas *parent) :
-    QObject(parent)
+    QObject(parent),
+    dirty(false)
 {
+}
+
+void DrawLayer::setDirty(bool d)
+{
+    dirty = d;
+    if (dirty)
+        emit needUpdate();
 }
 
 QOpenGLFunctions* DrawLayer::glFuncs() const
@@ -123,5 +131,10 @@ void DrawLayer::cleanUp()
     verts.destroy();
     colors.destroy();
     prog.reset();
+}
+
+void DrawLayer::flushState()
+{
+    dirty = false;
 }
 

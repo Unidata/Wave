@@ -39,13 +39,10 @@ class DataCanvas : public QQuickView
     LayerStore layers;
     ProjectionView proj;
 
-public:
-    explicit DataCanvas();
-    void glMessage(const QString &msg);
-    void addLayer(DrawLayer *layer);
-
-    QOpenGLFunctions* glFuncs() const { return funcs; }
-    ProjectionView& projection() { return proj; }
+private slots:
+    void renderGL();
+    void initGL();
+    void cleanUpGL();
 
 protected:
     void mouseMoveEvent(QMouseEvent *ev) override;
@@ -56,10 +53,15 @@ protected:
 
 signals:
 
+public:
+    explicit DataCanvas();
+    void glMessage(const QString &msg);
+    void addLayer(DrawLayer *layer);
+
+    QOpenGLFunctions* glFuncs() const { return funcs; }
+    ProjectionView& projection() { return proj; }
+
 public slots:
-    void renderGL();
-    void initGL();
-    void cleanUpGL();
     void logMessage(const QOpenGLDebugMessage &msg);
 };
 

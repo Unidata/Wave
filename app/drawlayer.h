@@ -22,22 +22,27 @@ class DrawLayer : public QObject
     QOpenGLBuffer verts, colors;
     QOpenGLVertexArrayObject vao;
     QOpenGLShaderProgramPtr prog;
-
-public:
-    explicit DrawLayer(DataCanvas *parent = 0);
+    bool dirty;
 
 protected:
     QOpenGLFunctions* glFuncs() const;
     ProjectionView &projection() const;
 
 signals:
+    void needUpdate();
+
+public:
+    explicit DrawLayer(DataCanvas *parent = 0);
+
+    bool isDirty() const { return dirty; }
+    void setDirty(bool d);
 
 public slots:
+    virtual void configure(const QVariantMap &config);
     virtual void draw();
     virtual void init();
     virtual void cleanUp();
-    virtual void configure(const QVariantMap &config);
-
+    virtual void flushState();
 };
 
 #endif // DRAWLAYER_H

@@ -115,10 +115,13 @@ DataCanvas::DataCanvas()
 void DataCanvas::addLayer(DrawLayer* layer)
 {
     layers.push_back(std::move(DrawLayerPtr(layer)));
-    connect(this, &QQuickView::sceneGraphInitialized,
+    connect(this, &DataCanvas::sceneGraphInitialized,
             layer, &DrawLayer::init, Qt::DirectConnection);
-    connect(this, &QQuickView::sceneGraphInvalidated,
+    connect(this, &DataCanvas::sceneGraphInvalidated,
             layer, &DrawLayer::cleanUp, Qt::DirectConnection);
+    connect(this, &DataCanvas::afterSynchronizing,
+            layer, &DrawLayer::flushState, Qt::DirectConnection);
+    connect(layer, &DrawLayer::needUpdate, this, &DataCanvas::update);
 }
 
 void DataCanvas::mousePressEvent(QMouseEvent *ev)
