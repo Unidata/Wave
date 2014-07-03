@@ -4,6 +4,7 @@
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions>
 #include <QOpenGLTimeMonitor>
+#include <QtQml>
 
 #include "drawlayer.h"
 #include "hurricanelayer.h"
@@ -32,6 +33,7 @@ DataCanvas::DataCanvas()
     fmt.setSamples(4);
 
     // Set-up the view
+    rootContext()->setContextProperty("viewProjection", &proj);
     setSource({"qrc:/qml/main.qml"});
     setResizeMode(QQuickView::SizeRootObjectToView);
     setClearBeforeRendering(false);
