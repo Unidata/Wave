@@ -1,0 +1,51 @@
+<html>
+
+<head>
+    <title>WAVE</title>
+    <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+    <link rel="stylesheet" href="main.css">
+
+    <script type="text/javascript" src="gl-matrix.js"></script>
+    <script type="text/javascript" src="webgl-utils.js"></script>
+    <script type="text/javascript" src="Stats.js"></script>
+
+    <script id="shader-fs" type="x-shader/x-fragment">
+        precision mediump float;
+        
+        varying vec2 vTextureCoord;
+        varying vec4 vColor;
+        
+        uniform sampler2D uSampler;
+
+        void main(void) {
+            gl_FragColor = texture2D(uSampler, vTextureCoord);
+            // gl_FragColor = vColor;
+        }
+    </script>
+
+    <script id="shader-vs" type="x-shader/x-vertex">
+        attribute vec3 aVertexPosition;
+        attribute vec4 aVertexColor;
+        attribute vec2 aVertexTextureCoord;
+
+        uniform mat4 uMVMatrix;
+        uniform mat4 uPMatrix;
+        
+        varying vec2 vTextureCoord;
+        varying vec4 vColor;
+
+        void main(void) {
+            gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+            vTextureCoord = aVertexTextureCoord;
+            vColor = aVertexColor;
+        }
+    </script>
+
+    <script type="text/javascript" src="main.js"></script>
+</head>
+
+<body onload="webGLStart();">
+    <canvas id="canvas"></canvas>
+</body>
+
+</html>
