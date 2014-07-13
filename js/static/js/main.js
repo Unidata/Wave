@@ -101,17 +101,12 @@ function shift(vec) {
 function limitCenter() {
     var totalScale = scale();
     var scaledWidth = worldCoords.width() / totalScale;
-    console.log("camera" + cameraLoc);
-    console.log(domain.height());
-    console.log(worldCoords.height());
     if (scaledWidth <= domain.width()) {
         cameraLoc[0] = bound(domain.left + 0.5 * scaledWidth, cameraLoc[0], domain.right - 0.5 * scaledWidth);
     } else {
         cameraLoc[0] = bound(domain.right - 0.5 * scaledWidth, cameraLoc[0], domain.left + 0.5 * scaledWidth);
     }
     var scaledHeight = worldCoords.height() * aspect / totalScale;
-    console.log(domain.top - 0.5 * scaledHeight);
-    console.log(scaledHeight);
     if (scaledHeight <= domain.height()) {
         cameraLoc[1] = bound(domain.bottom + 0.5 * scaledHeight, cameraLoc[1], domain.top - 0.5 * scaledHeight);
     } else {
@@ -119,7 +114,6 @@ function limitCenter() {
     }
     lookAt[0] = cameraLoc[0];
     lookAt[1] = cameraLoc[1];
-    console.log(cameraLoc);
     matrixChanged = true;
 }
 
