@@ -3,11 +3,20 @@ function Rectangle () {
 }
 
 Rectangle.prototype.width = function() {
-    return this.left - this.right;
+    return this.right - this.left;
 }
 
 Rectangle.prototype.height = function() {
     return this.top - this.bottom;
+}
+
+function bound(min, val, max) {
+    if (val < min) {
+        return min;
+    } else if (val > max ) {
+        return max;
+    }
+    return val;
 }
 
 var cameraLoc = vec3.fromValues(0., 0., 1.);
@@ -17,13 +26,17 @@ var up = vec3.fromValues(0., 1., 0.);
 var wheelDelta = 0.;
 var wheelZoomStep = 60.;
 function handleWheel(e) {
+    var pos = vec4.fromValues(e.pageX - canvas.offsetLeft,
+        e.pageY - canvas.offsetTop, 0., 1.);
+    vec4.scale(pos, pos, window.devicePixelRatio || 1);
+    pos[3] = 1.;
     wheelDelta += e.wheelDelta;
     if (wheelDelta >= wheelZoomStep) {
         wheelDelta %= wheelZoomStep;
-        zoomInTo(e.clientX, e.clientY);
+        zoomInTo(pos);
     } else if (wheelDelta < -wheelZoomStep) {
         wheelDelta = -(-wheelDelta % wheelZoomStep);
-        zoomOutFrom(e.clientX, e.clientY);
+        zoomOutFrom(pos);
     }
 }
 
@@ -32,7 +45,7 @@ var dragging = false;
 function handleDown(e) {
     if (e.button == 0) {
         dragging = true;
-        vec3.set(dragPos, e.clientX, e.clientY, 0., 0.);
+        vec4.set(dragPos, e.clientX, e.clientY, 0., 0.);
     }
 }
 
@@ -47,38 +60,34 @@ function handleMove() {
         vec4.scale(offset, offset, window.devicePixelRatio || 1);
         vec4.transformMat4(offset, offset, screenToProj);
         shift(vec3.fromValues(offset[0], offset[1], offset[2]));
-        vec3.set(dragPos, window.event.clientX, window.event.clientY, 0.);
+        vec4.set(dragPos, window.event.clientX, window.event.clientY, 0., 0.);
     }
 }
 
 var zoomIncrement = 1.5;
 function setZoom(z) {
-    zoom = z;
-    if (zoom < 1.) {
-        zoom = 1.;
-    } else if (zoom > 100.) {
-        zoom = 100.;
-    }
+    zoom = bound(1., z, 100.);
     matrixChanged = true;
     return zoom;
 }
 
 function zoomInTo(pos) {
     var oldZoom = zoom;
-    setZoom(zoom * zoomIncrement);
+    zoomFixedPoint(pos, oldZoom / setZoom(zoom * zoomIncrement));
 }
 
 function zoomOutFrom(pos) {
     var oldZoom = zoom;
-    setZoom(zoom / zoomIncrement);
+    zoomFixedPoint(pos, oldZoom / setZoom(zoom / zoomIncrement));
 }
 
 function zoomFixedPoint(pt, factor) {
-    var offset = vec2.create();
-    var trans = vec2.create();
-    vec2.transformMat4(trans, pt, screenToProj);
-    vec2.subtract(offset, cameraLoc, trans);
-    vec2.scale(offset, offset, 1 - factor);
+    var offset = vec4.create();
+    var trans = vec4.create();
+    vec4.transformMat4(trans, pt, screenToProj);
+    vec4.subtract(offset, trans, cameraLoc);
+    vec4.scale(offset, offset, 1 - factor);
+    offset[3] = 1.;
     shift(offset);
 }
 
@@ -90,6 +99,27 @@ function shift(vec) {
 }
 
 function limitCenter() {
+    var totalScale = scale();
+    var scaledWidth = worldCoords.width() / totalScale;
+    console.log("camera" + cameraLoc);
+    console.log(domain.height());
+    console.log(worldCoords.height());
+    if (scaledWidth <= domain.width()) {
+        cameraLoc[0] = bound(domain.left + 0.5 * scaledWidth, cameraLoc[0], domain.right - 0.5 * scaledWidth);
+    } else {
+        cameraLoc[0] = bound(domain.right - 0.5 * scaledWidth, cameraLoc[0], domain.left + 0.5 * scaledWidth);
+    }
+    var scaledHeight = worldCoords.height() * aspect / totalScale;
+    console.log(domain.top - 0.5 * scaledHeight);
+    console.log(scaledHeight);
+    if (scaledHeight <= domain.height()) {
+        cameraLoc[1] = bound(domain.bottom + 0.5 * scaledHeight, cameraLoc[1], domain.top - 0.5 * scaledHeight);
+    } else {
+        cameraLoc[1] = bound(domain.top - 0.5 * scaledHeight, cameraLoc[1], domain.bottom + 0.5 * scaledHeight);
+    }
+    lookAt[0] = cameraLoc[0];
+    lookAt[1] = cameraLoc[1];
+    console.log(cameraLoc);
     matrixChanged = true;
 }
 
@@ -291,8 +321,8 @@ function handleLoadedTexture(texture) {
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
     // Wrapping and filtering settings important to supporting non-POT texture
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.bindTexture(gl.TEXTURE_2D, null);
