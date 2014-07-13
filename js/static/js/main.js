@@ -336,8 +336,7 @@ function initTexture() {
     marbleTexture.image.onload = function() {
         handleLoadedTexture(marbleTexture)
     }
-    // marbleTexture.image.src = "nehe.gif";
-    marbleTexture.image.src = "world.topo.bathy.200406.3x5400x2700.png";
+    marbleTexture.image.src = "static/world.topo.bathy.200406.3x5400x2700.png";
 }
 
 var matrixChanged = true;
