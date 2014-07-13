@@ -44,7 +44,7 @@ from IPython.html.services.kernels.handlers import (
     KernelHandler, KernelActionHandler,
     IOPubHandler, ShellHandler, StdinHandler,
 )
-from IPython.html.services.kernels.handlers import _kernel_action_regex,
+from IPython.html.services.kernels.handlers import _kernel_action_regex
 
 #-----------------------------------------------------------------------------
 # The Tornado web application
