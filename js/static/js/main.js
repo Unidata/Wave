@@ -330,7 +330,7 @@ function initTexture() {
     marbleTexture.image.onload = function() {
         handleLoadedTexture(marbleTexture)
     }
-    marbleTexture.image.src = "static/world.topo.bathy.200406.3x5400x2700.png";
+    // marbleTexture.image.src = "static/world.topo.bathy.200406.3x5400x2700.png";
 }
 
 var matrixChanged = true;
@@ -391,6 +391,7 @@ function animate() {
 function tick() {
     requestAnimFrame(tick);
     drawScene();
+    // request_update();
     // animate();
 }
 
@@ -401,6 +402,7 @@ function webGLStart() {
     initBuffers();
     initTexture();
     initStats();
+    initIPython();
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
@@ -408,6 +410,52 @@ function webGLStart() {
     tick();
 }
 
+function init_namespace(kernel) {
+    var code = "import json\n" +
+    "from IPython.core.display import JSON, Image, display\n" +
+    "from numpy import linspace\n" +
+
+    "def update_plot(n, xmax=10, npoints=200):\n" +
+    "    print n, xmax, npoints\n" +
+    "    display(Image('static/world.topo.bathy.200406.3x5400x2700.png'))";
+    kernel.execute(code, {});
+}
+
+function update_plot(msg_type, content){
+    // callback for updating the plot with the output of the request
+    if (msg_type !== 'display_data')
+        return;
+    var lines = content['data']['image/png'];//['application/image'];
+    marbleTexture.image.src = "data:image/jpeg;base64," + lines;
+    // marbleTexture.image.src = "static/world.topo.bathy.200406.3x5400x2700.png";
+    // console.log(lines);
+};
+
+function do_request_update(kernel){
+    var args = 5 + ", xmax=" + 10 + ", npoints=" + 15;
+    kernel.execute("update_plot(" + args + ")", {'output': update_plot});
+};
+
+var request_update;
+function initIPython() {
+    $([IPython.events]).on('status_started.Kernel', function(evt, data) {
+        setTimeout(function() {
+            init_namespace(data.kernel);
+            do_request_update(data.kernel);
+        }, 500);
+    });
+    
+    var kernel = new IPython.Kernel('/kernels');
+    
+    request_update = function() {
+        do_request_update(kernel);
+    }
+
+    var ws_url = 'ws' + document.location.origin.substring(4);
+    setTimeout(function() {
+        kernel._kernel_started({kernel_id: '1', ws_url: ws_url});
+    }, 500);
+}
 
 var stats;
 function initStats() {
