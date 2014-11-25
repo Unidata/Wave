@@ -56,6 +56,11 @@ class IndexHandler(web.RequestHandler):
     def get(self):
         return self.render('index.html')
 
+class NoCacheStaticFileHandler(web.StaticFileHandler):
+    def set_extra_headers(self, path):
+        # Disable cache
+        self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+
 class WebApp(web.Application):
 
     def __init__(self, kernel_manager):
@@ -65,7 +70,7 @@ class WebApp(web.Application):
             (r"/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex), KernelActionHandler),
             (r"/kernels/%s/iopub" % _kernel_id_regex, IOPubHandler),
             (r"/kernels/%s/shell" % _kernel_id_regex, ShellHandler),
-            (r"/kernels/%s/stdin" % _kernel_id_regex, StdinHandler),
+            (r"/kernels/%s/stdin" % _kernel_id_regex, StdinHandler)
         ]
 
         settings = dict(
@@ -74,6 +79,7 @@ class WebApp(web.Application):
             cookie_secret='secret',
             cookie_name='ignored',
             kernel_manager=kernel_manager,
+            static_handler_class=NoCacheStaticFileHandler
         )
 
         super(WebApp, self).__init__(handlers, **settings)
@@ -84,11 +90,11 @@ class WebApp(web.Application):
 
 def main():
     kernel_manager = MultiKernelManager()
-    
+
     # we are only using one kernel:
     kernel_id = '1'
     kernel_manager.start_kernel(kernel_id=kernel_id)
-    
+
     logging.basicConfig(level=logging.INFO)
     app = WebApp(kernel_manager)
     server = httpserver.HTTPServer(app)

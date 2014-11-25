@@ -1,181 +1,4 @@
 "use strict";
-function Rectangle () {
-}
-
-Rectangle.prototype.width = function() {
-    return this.right - this.left;
-}
-
-Rectangle.prototype.height = function() {
-    return this.top - this.bottom;
-}
-
-function bound(min, val, max) {
-    if (val < min) {
-        return min;
-    } else if (val > max ) {
-        return max;
-    }
-    return val;
-}
-
-var cameraLoc = vec3.fromValues(0., 0., 1.);
-var lookAt = vec3.fromValues(0., 0., 0.);
-var up = vec3.fromValues(0., 1., 0.);
-
-var wheelDelta = 0.;
-var wheelZoomStep = 60.;
-function handleWheel(e) {
-    var pos = vec4.fromValues(e.pageX - canvas.offsetLeft,
-        e.pageY - canvas.offsetTop, 0., 1.);
-    vec4.scale(pos, pos, window.devicePixelRatio || 1);
-    pos[3] = 1.;
-    wheelDelta += e.wheelDelta;
-    if (wheelDelta >= wheelZoomStep) {
-        wheelDelta %= wheelZoomStep;
-        zoomInTo(pos);
-    } else if (wheelDelta < -wheelZoomStep) {
-        wheelDelta = -(-wheelDelta % wheelZoomStep);
-        zoomOutFrom(pos);
-    }
-}
-
-var dragPos = vec4.create();
-var dragging = false;
-function handleDown(e) {
-    if (e.button == 0) {
-        dragging = true;
-        vec4.set(dragPos, e.clientX, e.clientY, 0., 0.);
-    }
-}
-
-function handleUp(e) {
-    dragging = false;
-}
-
-function handleMove() {
-    if (dragging) {
-        var offset = vec4.fromValues(window.event.clientX, window.event.clientY, 0., 0.);
-        vec4.subtract(offset, dragPos, offset);
-        vec4.scale(offset, offset, window.devicePixelRatio || 1);
-        vec4.transformMat4(offset, offset, screenToProj);
-        shift(vec3.fromValues(offset[0], offset[1], offset[2]));
-        vec4.set(dragPos, window.event.clientX, window.event.clientY, 0., 0.);
-    }
-}
-
-var zoomIncrement = 1.5;
-function setZoom(z) {
-    zoom = bound(1., z, 100.);
-    matrixChanged = true;
-    return zoom;
-}
-
-function zoomInTo(pos) {
-    var oldZoom = zoom;
-    zoomFixedPoint(pos, oldZoom / setZoom(zoom * zoomIncrement));
-}
-
-function zoomOutFrom(pos) {
-    var oldZoom = zoom;
-    zoomFixedPoint(pos, oldZoom / setZoom(zoom / zoomIncrement));
-}
-
-function zoomFixedPoint(pt, factor) {
-    var offset = vec4.create();
-    var trans = vec4.create();
-    vec4.transformMat4(trans, pt, screenToProj);
-    vec4.subtract(offset, trans, cameraLoc);
-    vec4.scale(offset, offset, 1 - factor);
-    offset[3] = 1.;
-    shift(offset);
-}
-
-function shift(vec) {
-    vec3.add(cameraLoc, cameraLoc, vec);
-    vec3.add(lookAt, lookAt, vec);
-    limitCenter();
-    matrixChanged = true;
-}
-
-function limitCenter() {
-    var totalScale = scale();
-    var scaledWidth = worldCoords.width() / totalScale;
-    if (scaledWidth <= domain.width()) {
-        cameraLoc[0] = bound(domain.left + 0.5 * scaledWidth, cameraLoc[0], domain.right - 0.5 * scaledWidth);
-    } else {
-        cameraLoc[0] = bound(domain.right - 0.5 * scaledWidth, cameraLoc[0], domain.left + 0.5 * scaledWidth);
-    }
-    var scaledHeight = worldCoords.height() * aspect / totalScale;
-    if (scaledHeight <= domain.height()) {
-        cameraLoc[1] = bound(domain.bottom + 0.5 * scaledHeight, cameraLoc[1], domain.top - 0.5 * scaledHeight);
-    } else {
-        cameraLoc[1] = bound(domain.top - 0.5 * scaledHeight, cameraLoc[1], domain.bottom + 0.5 * scaledHeight);
-    }
-    lookAt[0] = cameraLoc[0];
-    lookAt[1] = cameraLoc[1];
-    matrixChanged = true;
-}
-
-var gl;
-function initGL(canvas) {
-    gl = WebGLUtils.setupWebGL(canvas, {antialias: true})
-    window.onresize = resize;
-    gl.canvas.onmousewheel = handleWheel;
-    gl.canvas.onmousedown = handleDown;
-    gl.canvas.onmouseup = handleUp;
-    gl.canvas.onmousemove = handleMove;
-    resize();
-    if (!gl) {
-        alert("Could not initialise WebGL, sorry :-(");
-    }
-}
-
-var worldCoords = new Rectangle();
-worldCoords.left = -1.0;
-worldCoords.right = 1.0;
-worldCoords.bottom = -1.0;
-worldCoords.top = 1.0;
-
-var domain = new Rectangle();
-domain.left = -180.;
-domain.right = 180.;
-domain.bottom = -90.;
-domain.top = 90.;
-
-var worldScale = 1.0;
-function updateWorldScale() {
-    var widthRat = worldCoords.width() / domain.width();
-    var heightRat = aspect * worldCoords.height() / domain.height();
-    worldScale = widthRat >= heightRat ? widthRat : heightRat;
-    matrixChanged = true;
-}
-
-var zoom = 1.;
-function scale() {
-    return zoom * worldScale;
-}
-
-var size = {};
-var aspect = 1.0;
-function resize() {
-    var ratio = window.devicePixelRatio || 1;
-    gl.canvas.width = gl.canvas.clientWidth * ratio;
-    gl.canvas.height = gl.canvas.clientHeight * ratio;
-
-    size.width = gl.canvas.width;
-    size.height = gl.canvas.height;
-    aspect = size.height / size.width;
-
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    updateWorldScale();
-    mat4.identity(normMatrix);
-    var vec = vec4.fromValues(-1., 1., 0., 0.);
-    mat4.translate(normMatrix, normMatrix, vec);
-    vec4.set(vec, 2. / size.width, -2. / size.height, 1., 1.);
-    mat4.scale(normMatrix, normMatrix, vec);
-    matrixChanged = true;
-}    
 
 function getShader(gl, id) {
     var shaderScript = document.getElementById(id);
@@ -214,8 +37,7 @@ function getShader(gl, id) {
 
 
 var shaderProgram;
-
-function initShaders() {
+function initShaders(view) {
     var fragmentShader = getShader(gl, "shader-fs");
     var vertexShader = getShader(gl, "shader-vs");
 
@@ -225,7 +47,7 @@ function initShaders() {
     gl.linkProgram(shaderProgram);
 
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        alert("Could not initialise shaders");
+        alert("Could not initialize shaders");
     }
 
     gl.useProgram(shaderProgram);
@@ -244,28 +66,9 @@ function initShaders() {
 }
 
 
-var mvMatrix = mat4.create();
-var mvMatrixStack = [];
-var pMatrix = mat4.create();
-var screenToProj = mat4.create();
-var normMatrix = mat4.create();
-
-function setMatrixUniforms() {
-    gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
-    gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
-}
-
-function mvPushMatrix() {
-    var copy = mat4.create();
-    mat4.set(mvMatrix, copy);
-    mvMatrixStack.push(copy);
-}
-
-function mvPopMatrix() {
-    if (mvMatrixStack.length == 0) {
-        throw "Invalid popMatrix!";
-    }
-    mvMatrix = mvMatrixStack.pop();
+function setMatrixUniforms(view) {
+    gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, view.pMatrix);
+    gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, view.mvMatrix);
 }
 
 var mapPositionBuffer;
@@ -333,26 +136,10 @@ function initTexture() {
     // marbleTexture.image.src = "static/world.topo.bathy.200406.3x5400x2700.png";
 }
 
-var matrixChanged = true;
-function updateMatrix() {
-    var scaler = vec3.create();
-    vec3.set(scaler, scale(), scale(), 1.);
-    mat4.ortho(pMatrix, worldCoords.left, worldCoords.right,
-        aspect * worldCoords.bottom, aspect * worldCoords.top, 10., -10.);
-    mat4.scale(pMatrix, pMatrix, scaler);
-
-    mat4.lookAt(mvMatrix, cameraLoc, lookAt, up);
-
-    mat4.multiply(screenToProj, pMatrix, mvMatrix);
-    mat4.invert(screenToProj, screenToProj);
-    mat4.multiply(screenToProj, screenToProj, normMatrix);
-    matrixChanged = false;
-}
-
 function drawScene() {
     stats.begin();
-    if (matrixChanged) {
-        updateMatrix();
+    if (canvas.matrixChanged) {
+        canvas.updateMatrix();
     }
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -373,31 +160,20 @@ function drawScene() {
         gl.uniform1i(shaderProgram.samplerUniform, 0);
     }
 
-    setMatrixUniforms();
+    setMatrixUniforms(canvas);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, mapPositionBuffer.numItems);
     
     stats.end();
 }
 
-var lastTime = 0;
-function animate() {
-    var timeNow = new Date().getTime();
-    if (lastTime != timeNow) {
-        var elapsed = timeNow - lastTime;
-    }
-    lastTime = timeNow;
-}
-
 function tick() {
     requestAnimFrame(tick);
     drawScene();
-    // request_update();
-    // animate();
 }
 
+var canvas;
 function webGLStart() {
-    var canvas = document.getElementById("canvas");
-    initGL(canvas);
+    canvas = new ViewCanvas(document.getElementById("canvas"));
     initShaders();
     initBuffers();
     initTexture();
@@ -414,11 +190,18 @@ function init_namespace(kernel) {
     var code = "import json\n" +
     "from IPython.core.display import JSON, Image, display\n" +
     "from numpy import linspace\n" +
-
+    "import wave\n" +
+    "wave.foo()\n" +
     "def update_plot(n, xmax=10, npoints=200):\n" +
     "    print n, xmax, npoints\n" +
     "    display(Image('static/world.topo.bathy.200406.3x5400x2700.png'))";
-    kernel.execute(code, {});
+    kernel.execute(code, {'output': logit});
+}
+
+function logit(msg_type, content) {
+    if (msg_type == 'stream') {
+        console.log(content['data']);
+    }
 }
 
 function update_plot(msg_type, content){
