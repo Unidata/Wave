@@ -79,7 +79,8 @@ class WebApp(web.Application):
             cookie_secret='secret',
             cookie_name='ignored',
             kernel_manager=kernel_manager,
-            static_handler_class=NoCacheStaticFileHandler
+            static_handler_class=NoCacheStaticFileHandler,
+            debug=True
         )
 
         super(WebApp, self).__init__(handlers, **settings)

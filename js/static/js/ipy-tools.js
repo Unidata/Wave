@@ -40,4 +40,5 @@ function parseImage(data) {
             return 'data:' + attr + ';base64,' + data[attr];
         }
     }
+    return null;
 }

@@ -89,15 +89,19 @@ RasterImageLayer.prototype.initTexture = function() {
     this.texture.image.onload = this.loadTextureData.bind(this);
 }
 
-RasterImageLayer.prototype.handleBinary = function(msg_type, content) {
+RasterImageLayer.prototype.handleData = function(msg_type, content) {
     // callback for updating the texture with new data
     logit(msg_type, content)
+    console.log(content)
     if (msg_type == 'display_data') {
-        this.texture.image.src = parseImage(content['data']);
+        var data = parseImage(content['data']);
+        if (data != null) {
+            this.texture.image.src = data;
+        }
     }
 }
 
 RasterImageLayer.prototype.requestData = function(kernel) {
     this.kernel.execute('wave.blueMarble()',
-        {'output': this.handleBinary.bind(this)});
+        {'output': this.handleData.bind(this)});
 }
