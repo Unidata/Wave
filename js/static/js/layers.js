@@ -36,7 +36,8 @@ RasterImageLayer.prototype.draw = function(canvas) {
 }
 
 RasterImageLayer.prototype.initShaders = function(view) {
-    this.shader = new ShaderProgram("shader-fs", "shader-vs");
+    this.shader = new ShaderProgram("static/fs/textureMapping.fs",
+        "static/vs/textureMapping.vs");
     gl.useProgram(this.shader);
 
     this.shader.vertexPositionAttribute = gl.getAttribLocation(this.shader, "aVertexPosition");

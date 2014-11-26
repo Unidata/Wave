@@ -18,45 +18,41 @@ matrixStack.prototype.pop = function() {
 }
 
 
-function getShader(gl, id) {
-    var shaderScript = document.getElementById(id);
-    if (!shaderScript) {
-        return null;
-    }
+function loadShader(gl, url) {
+	var shader;
+	function loadSource() {
+		if (this.readyState == this.DONE && this.status == 200) {
+			var type = url.slice(-2);
+			if (type == 'fs') {
+				shader = gl.createShader(gl.FRAGMENT_SHADER);
+			} else if (type == 'vs') {
+				shader = gl.createShader(gl.VERTEX_SHADER);
+			} else {
+				console.warn('Could not determine shader type for: ' + url);
+				return;
+			}
 
-    var str = "";
-    var k = shaderScript.firstChild;
-    while (k) {
-        if (k.nodeType == 3) {
-            str += k.textContent;
-        }
-        k = k.nextSibling;
-    }
+			gl.shaderSource(shader, this.responseText);
+			gl.compileShader(shader);
 
-    var shader;
-    if (shaderScript.type == "x-shader/x-fragment") {
-        shader = gl.createShader(gl.FRAGMENT_SHADER);
-    } else if (shaderScript.type == "x-shader/x-vertex") {
-        shader = gl.createShader(gl.VERTEX_SHADER);
-    } else {
-        return null;
-    }
-
-    gl.shaderSource(shader, str);
-    gl.compileShader(shader);
-
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        alert(gl.getShaderInfoLog(shader));
-        return null;
-    }
+			if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+				alert(gl.getShaderInfoLog(shader));
+				return null;
+			}
+		}
+	}
+	var xhr = new XMLHttpRequest();
+	xhr.open('get', url, false);
+	xhr.send(null);
+	loadSource.call(xhr);
 
     return shader;
 }
 
 
 function ShaderProgram(fs, vs) {
-    var fragmentShader = getShader(gl, fs);
-    var vertexShader = getShader(gl, vs);
+    var fragmentShader = loadShader(gl, fs);
+    var vertexShader = loadShader(gl, vs);
 
     var prog = gl.createProgram();
     gl.attachShader(prog, vertexShader);
@@ -87,3 +83,4 @@ function Buffer(data, Converter) {
     buffer.numItems = data.length;
     return buffer;
 }
+
