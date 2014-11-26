@@ -17,6 +17,7 @@ matrixStack.prototype.pop = function() {
     return stack.pop();
 }
 
+
 function getShader(gl, id) {
     var shaderScript = document.getElementById(id);
     if (!shaderScript) {
@@ -50,4 +51,39 @@ function getShader(gl, id) {
     }
 
     return shader;
+}
+
+
+function ShaderProgram(fs, vs) {
+    var fragmentShader = getShader(gl, fs);
+    var vertexShader = getShader(gl, vs);
+
+    var prog = gl.createProgram();
+    gl.attachShader(prog, vertexShader);
+    gl.attachShader(prog, fragmentShader);
+    gl.linkProgram(prog);
+
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+        alert("Error linking program!");
+    }
+
+    return prog;
+}
+
+function Buffer(data, Converter) {
+	// Default to making Float32Arrays
+	if (Converter == undefined) { Converter = Float32Array }
+
+	// Flatten data for handing to WebGL
+	var flattened = data.reduce(function(a, b) { return a.concat(b); }, []);
+
+	// Create new buffer and load data
+	var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Converter(flattened), gl.STATIC_DRAW);
+
+    // Store data size and stride for easy use later
+    buffer.itemSize = data[0].length;
+    buffer.numItems = data.length;
+    return buffer;
 }

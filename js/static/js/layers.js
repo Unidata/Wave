@@ -11,101 +11,67 @@ function RasterImageLayer(kernel) {
 RasterImageLayer.prototype.draw = function(canvas) {
     // Setup pos
     gl.bindBuffer(gl.ARRAY_BUFFER, this.mapPositionBuffer);
-    gl.vertexAttribPointer(this.shaderProgram.vertexPositionAttribute,
+    gl.vertexAttribPointer(this.shader.vertexPositionAttribute,
         this.mapPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.mapColorBuffer);
-    gl.vertexAttribPointer(this.shaderProgram.vertexColorAttribute,
+    gl.vertexAttribPointer(this.shader.vertexColorAttribute,
         this.mapColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.mapTextureCoordBuffer);
-    gl.vertexAttribPointer(this.shaderProgram.vertexTextureCoordAttribute,
+    gl.vertexAttribPointer(this.shader.vertexTextureCoordAttribute,
         this.mapTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    gl.useProgram(this.shaderProgram);
+    gl.useProgram(this.shader);
 
     if (this.texture.initialized) {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
     }
 
-    gl.uniformMatrix4fv(this.shaderProgram.pMatrixUniform, false, canvas.pMatrix);
-    gl.uniformMatrix4fv(this.shaderProgram.mvMatrixUniform, false, canvas.mvMatrix);
+    gl.uniformMatrix4fv(this.shader.pMatrixUniform, false, canvas.pMatrix);
+    gl.uniformMatrix4fv(this.shader.mvMatrixUniform, false, canvas.mvMatrix);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.mapPositionBuffer.numItems);
 }
 
 RasterImageLayer.prototype.initShaders = function(view) {
-    var fragmentShader = getShader(gl, "shader-fs");
-    var vertexShader = getShader(gl, "shader-vs");
+    this.shader = new ShaderProgram("shader-fs", "shader-vs");
+    gl.useProgram(this.shader);
 
-    this.shaderProgram = gl.createProgram();
-    gl.attachShader(this.shaderProgram, vertexShader);
-    gl.attachShader(this.shaderProgram, fragmentShader);
-    gl.linkProgram(this.shaderProgram);
-
-    if (!gl.getProgramParameter(this.shaderProgram, gl.LINK_STATUS)) {
-        alert("Could not initialize shaders");
-    }
-
-    gl.useProgram(this.shaderProgram);
-    this.shaderProgram.vertexPositionAttribute = gl.getAttribLocation(this.shaderProgram, "aVertexPosition");
-    gl.enableVertexAttribArray(this.shaderProgram.vertexPositionAttribute);
+    this.shader.vertexPositionAttribute = gl.getAttribLocation(this.shader, "aVertexPosition");
+    gl.enableVertexAttribArray(this.shader.vertexPositionAttribute);
     
-    this.shaderProgram.vertexColorAttribute = gl.getAttribLocation(this.shaderProgram, "aVertexColor");
-    gl.enableVertexAttribArray(this.shaderProgram.vertexColorAttribute);
-    this.shaderProgram.vertexTextureCoordAttribute = gl.getAttribLocation(this.shaderProgram, "aVertexTextureCoord");
-    gl.enableVertexAttribArray(this.shaderProgram.vertexTextureCoordAttribute);
+    this.shader.vertexColorAttribute = gl.getAttribLocation(this.shader, "aVertexColor");
+    gl.enableVertexAttribArray(this.shader.vertexColorAttribute);
 
-    this.shaderProgram.pMatrixUniform = gl.getUniformLocation(this.shaderProgram, "uPMatrix");
-    this.shaderProgram.mvMatrixUniform = gl.getUniformLocation(this.shaderProgram, "uMVMatrix");
-    this.shaderProgram.samplerUniform = gl.getUniformLocation(this.shaderProgram, "uSampler");                                                        
+    this.shader.vertexTextureCoordAttribute = gl.getAttribLocation(this.shader, "aVertexTextureCoord");
+    gl.enableVertexAttribArray(this.shader.vertexTextureCoordAttribute);
 
-    gl.uniform1i(this.shaderProgram.samplerUniform, 0);
+    this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
+    this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
+    this.shader.samplerUniform = gl.getUniformLocation(this.shader, "uSampler");                                                        
+
+    gl.uniform1i(this.shader.samplerUniform, 0);
 }
 
 RasterImageLayer.prototype.initBuffers = function() {
-    this.mapTextureCoordBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.mapTextureCoordBuffer);
-    var textureCoords = [
-         0.0,  0.0,
-         0.0,  1.0,
-         1.0,  0.0,
-         1.0,  1.0,
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
-    this.mapTextureCoordBuffer.itemSize = 2;
-    this.mapTextureCoordBuffer.numItems = 4;
+    this.mapTextureCoordBuffer = new Buffer(
+        [[0.0,  0.0], [0.0,  1.0], [1.0,  0.0], [1.0,  1.0]]);
 
-    this.mapColorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.mapColorBuffer);
-    var colors = [
-        0.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 0.0, 1.0,
-        0.0, 0.0, 1.0, 1.0,
-        0.0, 1.0, 1.0, 1.0
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-    this.mapColorBuffer.itemSize = 4;
-    this.mapColorBuffer.numItems = 4;
+    this.mapColorBuffer = new Buffer(
+        [[0.0, 0.0, 0.0, 1.0], [0.0, 1.0, 0.0, 1.0],
+         [0.0, 0.0, 1.0, 1.0], [0.0, 1.0, 1.0, 1.0]]);
 
-    this.mapPositionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.mapPositionBuffer);
-    var vertices = [
-        -180.0, -90.0,
-        -180.0,  90.0,
-         180.0, -90.0,
-         180.0,  90.0,
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-    this.mapPositionBuffer.itemSize = 2;
-    this.mapPositionBuffer.numItems = 4;
+    this.mapPositionBuffer = new Buffer(
+        [[-180.0, -90.0], [-180.0,  90.0], [180.0, -90.0], [180.0,  90.0]]);
 }
 
 RasterImageLayer.prototype.loadTextureData = function() {
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.texture.image);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE,
+        this.texture.image);
 
     // Wrapping and filtering settings important to supporting non-POT texture
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
