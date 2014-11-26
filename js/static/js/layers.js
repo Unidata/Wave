@@ -5,7 +5,7 @@ function RasterImageLayer(kernel) {
     this.initShaders();
     this.initBuffers();
     this.initTexture();
-    this.request_data();
+    this.requestData();
 }
 
 RasterImageLayer.prototype.draw = function(canvas) {
@@ -24,9 +24,9 @@ RasterImageLayer.prototype.draw = function(canvas) {
 
     gl.useProgram(this.shaderProgram);
 
-    if (marbleTexture.initialized) {
+    if (this.texture.initialized) {
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, marbleTexture);
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
     }
 
     gl.uniformMatrix4fv(this.shaderProgram.pMatrixUniform, false, canvas.pMatrix);
@@ -103,10 +103,9 @@ RasterImageLayer.prototype.initBuffers = function() {
 }
 
 RasterImageLayer.prototype.loadTextureData = function() {
-    var texture = marbleTexture;
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.texture.image);
 
     // Wrapping and filtering settings important to supporting non-POT texture
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -114,27 +113,24 @@ RasterImageLayer.prototype.loadTextureData = function() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.bindTexture(gl.TEXTURE_2D, null);
-    texture.initialized = true;
+    this.texture.initialized = true;
 }
 
-var marbleTexture;
 RasterImageLayer.prototype.initTexture = function() {
-    marbleTexture = gl.createTexture();
-    marbleTexture.image = new Image();
-    marbleTexture.image.onload = this.loadTextureData.bind(this);
+    this.texture = gl.createTexture();
+    this.texture.image = new Image();
+    this.texture.image.onload = this.loadTextureData.bind(this);
 }
 
-RasterImageLayer.prototype.handle_binary = function(msg_type, content) {
+RasterImageLayer.prototype.handleBinary = function(msg_type, content) {
     // callback for updating the texture with new data
-    if (msg_type !== 'display_data')
-        return;
-    var lines = content['data']['image/png'];
-    marbleTexture.image.src = "data:image/png;base64," + lines;
-    // marbleTexture.image.src = "static/world.topo.bathy.200406.3x5400x2700.png";
+    logit(msg_type, content)
+    if (msg_type == 'display_data') {
+        this.texture.image.src = parseImage(content['data']);
+    }
 }
 
-RasterImageLayer.prototype.request_data = function(kernel) {
-    var args = 5 + ", xmax=" + 10 + ", npoints=" + 15;
-    this.kernel.execute("update_plot(" + args + ")",
-        {'output': this.handle_binary});
+RasterImageLayer.prototype.requestData = function(kernel) {
+    this.kernel.execute('wave.blueMarble()',
+        {'output': this.handleBinary.bind(this)});
 }

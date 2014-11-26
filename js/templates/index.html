@@ -15,6 +15,7 @@
     <script src="{{ static_url("js/glutils.js") }}" type="text/javascript" ></script>
     <script src="{{ static_url("js/viewcanvas.js") }}" type="text/javascript" ></script>
     <script src="{{ static_url("js/layers.js") }}" type="text/javascript" ></script>
+    <script src="{{ static_url("js/ipy-tools.js") }}" type="text/javascript" ></script>
     <script src="{{ static_url("js/main.js") }}" type="text/javascript" ></script>
 
     <script id="shader-fs" type="x-shader/x-fragment">
@@ -51,7 +52,7 @@
 
 </head>
 
-<body onload="new Backend();">
+<body onload="Backend();">
     <canvas id="canvas"></canvas>
 </body>
 
