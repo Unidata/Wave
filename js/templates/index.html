@@ -12,7 +12,9 @@
     <script src="{{ static_url("js/extern/gl-matrix.js") }}" type="text/javascript" ></script>
     <script src="{{ static_url("js/extern/webgl-utils.js") }}" type="text/javascript" ></script>
     <script src="{{ static_url("js/extern/Stats.js") }}" type="text/javascript" ></script>
+    <script src="{{ static_url("js/glutils.js") }}" type="text/javascript" ></script>
     <script src="{{ static_url("js/viewcanvas.js") }}" type="text/javascript" ></script>
+    <script src="{{ static_url("js/layers.js") }}" type="text/javascript" ></script>
     <script src="{{ static_url("js/main.js") }}" type="text/javascript" ></script>
 
     <script id="shader-fs" type="x-shader/x-fragment">
@@ -49,7 +51,7 @@
 
 </head>
 
-<body onload="webGLStart();">
+<body onload="new Backend();">
     <canvas id="canvas"></canvas>
 </body>
 

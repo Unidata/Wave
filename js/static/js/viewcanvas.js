@@ -1,3 +1,5 @@
+"use strict";
+
 // Class to handle a rectangular bounding box
 function Rectangle () {
 }
@@ -66,7 +68,15 @@ function ViewCanvas(canvas) {
     this.size = {};
     this.aspect = 1.0;
 
+    // Iniitialize draw layers
+    this.layers = [];
+
+    // Initialze WebGL
     this.initGL();
+
+    // Set-up some permanent WebGL state
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.enable(gl.DEPTH_TEST);
 }
 
 ViewCanvas.prototype.initGL = function() {
@@ -224,4 +234,21 @@ ViewCanvas.prototype.updateMatrix = function() {
     mat4.invert(this.screenToProj, this.screenToProj);
     mat4.multiply(this.screenToProj, this.screenToProj, this.normMatrix);
     this.matrixChanged = false;
+}
+
+ViewCanvas.prototype.drawScene = function() {
+    // Flush matrix changes if necessary
+    if (this.matrixChanged) {
+        this.updateMatrix();
+    }
+
+    // Clear before drawing
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // Draw all the items
+    var numLayers = this.layers.length;
+    for (var ind=0; ind < numLayers; ++ind) {
+        var layer = this.layers[ind];
+        layer.draw.call(layer, this);
+    }
 }
