@@ -22,12 +22,7 @@ function mainLoop(kernel) {
 mainLoop.prototype.initStats = function() {
     this.stats = new Stats();
     this.stats.setMode(1); // 0: fps, 1: ms
-
-    // Align top-left
-    this.stats.domElement.style.position = 'absolute';
-    this.stats.domElement.style.left = '0px';
-    this.stats.domElement.style.top = '0px';
-    document.body.appendChild( this.stats.domElement );
+    document.body.appendChild(this.stats.domElement);
 }
 
 mainLoop.prototype.tick = function() {
