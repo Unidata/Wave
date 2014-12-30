@@ -80,6 +80,7 @@ class WebApp(web.Application):
             cookie_name='ignored',
             kernel_manager=kernel_manager,
             static_handler_class=NoCacheStaticFileHandler,
+            autoreload=True,
             debug=True
         )
 

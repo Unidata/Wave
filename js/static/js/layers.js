@@ -1,7 +1,8 @@
 "use strict";
 
-function RasterImageLayer(kernel) {
+function RasterImageLayer(kernel, code) {
     this.kernel = kernel;
+    this.pythonCode = code;
     this.initShaders();
     this.initBuffers();
     this.initTexture();
@@ -14,9 +15,9 @@ RasterImageLayer.prototype.draw = function(canvas) {
     gl.vertexAttribPointer(this.shader.vertexPositionAttribute,
         this.mapPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.mapColorBuffer);
-    gl.vertexAttribPointer(this.shader.vertexColorAttribute,
-        this.mapColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    // gl.bindBuffer(gl.ARRAY_BUFFER, this.mapColorBuffer);
+    // gl.vertexAttribPointer(this.shader.vertexColorAttribute,
+    //     this.mapColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.mapTextureCoordBuffer);
     gl.vertexAttribPointer(this.shader.vertexTextureCoordAttribute,
@@ -43,8 +44,8 @@ RasterImageLayer.prototype.initShaders = function(view) {
     this.shader.vertexPositionAttribute = gl.getAttribLocation(this.shader, "aVertexPosition");
     gl.enableVertexAttribArray(this.shader.vertexPositionAttribute);
     
-    this.shader.vertexColorAttribute = gl.getAttribLocation(this.shader, "aVertexColor");
-    gl.enableVertexAttribArray(this.shader.vertexColorAttribute);
+    // this.shader.vertexColorAttribute = gl.getAttribLocation(this.shader, "aVertexColor");
+    // gl.enableVertexAttribArray(this.shader.vertexColorAttribute);
 
     this.shader.vertexTextureCoordAttribute = gl.getAttribLocation(this.shader, "aVertexTextureCoord");
     gl.enableVertexAttribArray(this.shader.vertexTextureCoordAttribute);
@@ -60,12 +61,12 @@ RasterImageLayer.prototype.initBuffers = function() {
     this.mapTextureCoordBuffer = new Buffer(
         [[0.0,  0.0], [0.0,  1.0], [1.0,  0.0], [1.0,  1.0]]);
 
-    this.mapColorBuffer = new Buffer(
-        [[0.0, 0.0, 0.0, 1.0], [0.0, 1.0, 0.0, 1.0],
-         [0.0, 0.0, 1.0, 1.0], [0.0, 1.0, 1.0, 1.0]]);
+    // this.mapColorBuffer = new Buffer(
+    //     [[0.0, 0.0, 0.0, 1.0], [0.0, 1.0, 0.0, 1.0],
+    //      [0.0, 0.0, 1.0, 1.0], [0.0, 1.0, 1.0, 1.0]]);
 
-    this.mapPositionBuffer = new Buffer(
-        [[-180.0, -90.0], [-180.0,  90.0], [180.0, -90.0], [180.0,  90.0]]);
+    // Can we eliminate this placeholder?
+    this.mapPositionBuffer = new Buffer([[0., 0.], [0., 0.], [0., 0.], [0., 0.]]);
 }
 
 RasterImageLayer.prototype.loadTextureData = function() {
@@ -92,16 +93,47 @@ RasterImageLayer.prototype.initTexture = function() {
 RasterImageLayer.prototype.handleData = function(msg_type, content) {
     // callback for updating the texture with new data
     logit(msg_type, content)
-    console.log(content)
+    // console.log(content)
     if (msg_type == 'display_data') {
-        var data = parseImage(content['data']);
+        var payload = content['data'];
+        var data = parseImage(payload);
         if (data != null) {
             this.texture.image.src = data;
+        } else if (payload['application/json'] != null) {
+            var obj = JSON.parse(payload['application/json']);
+            if (obj.bbox != null) {
+                this.loadPosition(obj.bbox);
+            }
+            if (obj.image != null) {
+                this.loadImageData(obj.image);
+            }
         }
     }
 }
 
+RasterImageLayer.prototype.loadPosition = function(bbox) {
+    console.log(bbox);
+    this.mapPositionBuffer = new Buffer(bbox);
+}
+
+RasterImageLayer.prototype.loadImageData = function(image) {
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    var imgData = new Uint8Array(image.data);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, image.shape[0], image.shape[1],
+        0, gl.LUMINANCE, gl[image.type], imgData);
+
+    // Wrapping and filtering settings important to supporting non-POT texture
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    this.texture.initialized = true;
+}
+
 RasterImageLayer.prototype.requestData = function(kernel) {
-    this.kernel.execute('wave.blueMarble()',
+    this.kernel.execute(this.pythonCode,
         {'output': this.handleData.bind(this)});
 }

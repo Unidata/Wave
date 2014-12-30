@@ -13,7 +13,12 @@ function Backend() {
 
 function mainLoop(kernel) {
     this.canvas = new ViewCanvas(document.getElementById("canvas"));
-    this.canvas.layers.push(new RasterImageLayer(kernel));
+
+    var marble = new RasterImageLayer(kernel, 'wave.blueMarble()');
+    this.canvas.layers.push(marble);
+
+    var satellite = new RasterImageLayer(kernel, 'wave.satellite()');
+    this.canvas.layers.push(satellite)
 
     this.initStats();
     this.tick();

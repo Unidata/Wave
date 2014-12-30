@@ -77,6 +77,7 @@ function ViewCanvas(canvas) {
     // Set-up some permanent WebGL state
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
 }
 
 ViewCanvas.prototype.initGL = function() {
