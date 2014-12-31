@@ -19,6 +19,7 @@ function mainLoop(kernel) {
 
     var satellite = new RasterImageLayer(kernel, 'wave.satellite()');
     this.canvas.layers.push(satellite)
+    satellite.alpha = 0.6;
 
     this.initStats();
     this.tick();

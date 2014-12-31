@@ -3,6 +3,7 @@
 function RasterImageLayer(kernel, code) {
     this.kernel = kernel;
     this.pythonCode = code;
+    this.alpha = 1.0;
     this.initShaders();
     this.initBuffers();
     this.initTexture();
@@ -32,6 +33,7 @@ RasterImageLayer.prototype.draw = function(canvas) {
 
     gl.uniformMatrix4fv(this.shader.pMatrixUniform, false, canvas.pMatrix);
     gl.uniformMatrix4fv(this.shader.mvMatrixUniform, false, canvas.mvMatrix);
+    gl.uniform1f(this.shader.alphaUniform, this.alpha);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.mapPositionBuffer.numItems);
 }
@@ -52,7 +54,8 @@ RasterImageLayer.prototype.initShaders = function(view) {
 
     this.shader.pMatrixUniform = gl.getUniformLocation(this.shader, "uPMatrix");
     this.shader.mvMatrixUniform = gl.getUniformLocation(this.shader, "uMVMatrix");
-    this.shader.samplerUniform = gl.getUniformLocation(this.shader, "uSampler");                                                        
+    this.shader.samplerUniform = gl.getUniformLocation(this.shader, "uSampler");
+    this.shader.alphaUniform = gl.getUniformLocation(this.shader, "uAlpha");
 
     gl.uniform1i(this.shader.samplerUniform, 0);
 }
