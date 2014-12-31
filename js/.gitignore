@@ -1,3 +1,4 @@
 kernel-*.json
 *.png
 *.pyc
+*.nc
