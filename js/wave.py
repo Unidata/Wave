@@ -1,10 +1,11 @@
-import json
+from collections import namedtuple
 import numpy as np
 from netCDF4 import Dataset
-from rasterio import Affine, warp
+
 import rasterio
+from rasterio import Affine, warp
 from pyproj import Proj
-from IPython.core.display import JSON, Image, display
+
 
 print 'loaded wave'
 
@@ -15,11 +16,21 @@ print 'loaded wave'
 # 2) Clean up a lot of the hand-massaging here
 # 3) Need to just be using some projection/transform throughout and properly
 #    convert using it here instead of the implicit assumption of EQC/Plate Carree, etc.
-# 4) Need to fix half-pixel offset in images. This is caused by the use of the x,y values from
-#    TDS that correspond to grid box centers (?) while GDAL wants the offset to the upper left corner
-#    of the pixel
+# 4) Need to fix offset in images. Not sure where this comes from, but blue marble and
+#    satellite images don't line up.
 # 5) Need a better way to choose size of image returned. This likely needs to be folded in with the code
 #    determining the projection parameters of the warped image, just as done in C++ GDAL API.
+
+ImageInfo = namedtuple('ImageInfo', 'bbox data crs transform')
+
+def send_back(func):
+    from IPython.core.display import JSON, display
+    import json
+    def dec(*args, **kw):
+        res = func(*args, **kw)
+        display(JSON(data=json.dumps(res)))
+        return res
+    return dec
 
 def cornersToTriangleStripBBox(ll, ur):
     minX, minY = ll
@@ -28,70 +39,125 @@ def cornersToTriangleStripBBox(ll, ur):
                      [maxX, minY], [maxX,  maxY]])
 
 def xyToAffine(x, y, shape):
-    src = np.vstack([[1, 1, 1], [0, shape[0] - 1, 0], [0, 0, shape[1] - 1]])
+    src = np.vstack([[1, 1, 1], [0.5, shape[0] - 0.5, 0.5], [0.5, 0.5, shape[1] - 0.5]])
     dest = np.vstack([x, y])
     return np.dot(dest, np.linalg.inv(src)).flatten().tolist()
 
-def blueMarble():
-    # arrayCoords = np.array([[-180.0, -90.0], [-180.0,  90.0],
-    #                       [180.0, -90.0], [180.0,  90.0]])
-    arrayCoords = cornersToTriangleStripBBox((-180., -90.), (180., 90.))
-    display(Image('static/world.topo.bathy.200406.3x5400x2700.png'))
-    info = dict(bbox=arrayCoords.tolist())
-    display(JSON(data=json.dumps(info)))
+def readGDALRaster(src):
+    with rasterio.open(src) as raster:
+        bounds = raster.bounds
+        bbox = cornersToTriangleStripBBox((bounds.left, bounds.bottom), (bounds.right, bounds.top))
 
-def satellite():
-    # url = 'http://thredds-test.unidata.ucar.edu/thredds/dodsC/satellite/VIS/EAST-CONUS_1km/current/EAST-CONUS_1km_VIS_20141231_1915.gini'
-    url = 'static/EAST-CONUS_1km_VIS_20141230_1915.gini.nc'
-    nc = Dataset(url)
-    # print nc
-    if nc.ProjIndex == 3:
-        lcc = nc.variables['LambertConformal']
-        src_crs = dict(proj='lcc', lat_0=lcc.latitude_of_projection_origin,
-            lon_0=lcc.longitude_of_central_meridian,
-            lat_1=lcc.standard_parallel, lat_2=lcc.standard_parallel,
-            radius=lcc.earth_radius)
+        out = np.empty((raster.count,) + raster.shape, dtype=raster.dtypes[0])
+        src_proj = Proj(**raster.crs)
+        print raster.affine.to_gdal()
+        print raster.crs
+        print bbox
+        return ImageInfo(crs=raster.crs, transform=raster.affine,
+            data=raster.read(out=out), bbox=bbox) #zip(*src_proj(*zip(*bbox), inverse=True)))
 
-    vis_data = nc.variables['VIS']
-    numY, numX = vis_data.shape[1::]
-    arr = vis_data[0, :-1, :-1].astype(np.uint8)
+def readNetCDFRaster(src, var):
+    with Dataset(src) as nc:
+        if nc.ProjIndex == 3:
+            lcc = nc.variables['LambertConformal']
+            src_crs = dict(proj='lcc', lat_0=lcc.latitude_of_projection_origin,
+                lon_0=lcc.longitude_of_central_meridian,
+                lat_1=lcc.standard_parallel, lat_2=lcc.standard_parallel,
+                radius=lcc.earth_radius)
 
-    x = nc.variables['x'][:-1] * 1000.
-    lccX = [x[0], x[-1], x[0]]
-    y = nc.variables['y'][:-1] * 1000.
-    lccY = [y[0], y[0], y[-1]]
+        data = nc.variables[var][0, :-1, :-1].astype(np.uint8)
 
-    src_proj = Proj(**src_crs)
-    src_trans = xyToAffine(lccX, lccY, (x.size, y.size))
-    print src_trans
+        x = nc.variables['x'][:-1] * 1000.
+        lccX = [x[0], x[-1], x[0]]
+        y = nc.variables['y'][:-1] * 1000.
+        lccY = [y[0], y[0], y[-1]]
+        src_trans = xyToAffine(lccX, lccY, (x.size, y.size))
 
-    dest_crs = dict(proj='eqc', lon_0=lcc.longitude_of_central_meridian, lat_0=lcc.latitude_of_projection_origin)
+        projBox = [(x[0], y[-1]), (x[0], y[0]), (x[-1], y[-1]), (x[-1], y[0])]
+
+        return ImageInfo(crs=src_crs, transform=src_trans, data=data,
+            bbox=projBox)
+
+def warpRaster(imageinfo, dest_crs, dest_image):
+    # Convert source bounding box to lon/lat
+    src_proj = Proj(**imageinfo.crs)
+    projX, projY = zip(*imageinfo.bbox)
+    if src_proj.is_latlong():
+        print 'skipping'
+        lon,lat = projX, projY
+    else:
+        print 'not skipping'
+        lon,lat = src_proj(projX, projY, inverse=True)
+
+    # Now put lon/lat into destiation CRS
     dest_proj = Proj(**dest_crs)
-    projBoxX = [x[0], x[0], x[-1], x[-1]]
-    projBoxY = [y[-1], y[0], y[-1], y[0]]
+    dstX, dstY = np.array(dest_proj(lon, lat))
 
-    lon,lat = np.array(src_proj(projBoxX, projBoxY, inverse=True))
-    dstX, dstY = dest_proj(lon, lat)
-
+    # Figure out the enclosing bounding box of those coords
     dstMinX = dstX.min()
     dstMaxX = dstX.max()
     dstMinY = dstY.min()
     dstMaxY = dstY.max()
 
-    warped_data = np.zeros((4096, 4096), dtype=np.uint8)
-
-    dest_trans = xyToAffine([dstMinX, dstMaxX, dstMinX], [dstMaxY, dstMaxY, dstMinY], warped_data.shape[::-1])
+    print dest_image.shape[-2:][::-1]
+    print lon, lat
+    dest_trans = xyToAffine([dstMinX, dstMaxX, dstMinX], [dstMaxY, dstMaxY, dstMinY], dest_image.shape[-2:][::-1])
+    print dest_trans
+    print dstMinX, dstMaxX, dstMinY, dstMaxY
     with rasterio.drivers():
-        warp.reproject(arr, warped_data, src_trans, src_crs, dest_trans, dest_crs)
+        if not src_proj.is_latlong():
+            warp.reproject(imageinfo.data, dest_image, imageinfo.transform, imageinfo.crs, dest_trans, dest_crs)
+        else:
+            print 'skipping warp'
+            dest_image = imageinfo.data
 
     projBoxX = [dstMinX, dstMinX, dstMaxX, dstMaxX]
     projBoxY = [dstMinY, dstMaxY, dstMinY, dstMaxY]
 
-    arrayCoords = np.array(dest_proj(projBoxX, projBoxY, inverse=True)).T
+    return ImageInfo(crs=dest_crs, transform=dest_trans, data=dest_image,
+        bbox=zip(projBoxX, projBoxY))
 
-    print arrayCoords
-    imginfo = dict(data=warped_data.flatten().tolist(), type='UNSIGNED_BYTE', shape=warped_data.shape[::-1])
-    info = dict(image=imginfo, bbox=arrayCoords.tolist())
-    display(JSON(data=json.dumps(info)))
-    nc.close()
-    return warped_data
+typeMap = dict(uint8='UNSIGNED_BYTE')
+def jsonRaster(imageinfo):
+    arr = imageinfo.data
+    imginfo = dict(data=arr.flatten().tolist(), type=typeMap[arr.dtype.name], shape=arr.shape[::-1])
+    return dict(image=imginfo, bbox=imageinfo.bbox)
+
+class DataManager(object):
+    def __init__(self, crs=None, bounds=None):
+        if crs is None:
+            crs = dict(proj='eqc')
+
+        if bounds is None:
+            bounds = [(-180., -90.), (180., 90.)]
+
+        self.crs = crs
+        self.proj = Proj(**crs)
+
+        # Turn lon/lat bounds into projected coordinates
+        self._bounds = zip(*self.proj(*zip(*bounds)))
+
+    @send_back
+    def bounds(self):
+        return dict(bounds=self._bounds)
+
+    @send_back
+    def blueMarble(self):
+        # display(Image('static/world.topo.bathy.200406.3x5400x2700.png'))
+        image = readGDALRaster('static/world.topo.bathy.200406.3x5400x2700.png')
+
+        warped_data = np.zeros_like(image.data)
+        warped_image = warpRaster(image, self.crs, warped_data)
+
+        return jsonRaster(warped_image)
+
+    @send_back
+    def satellite(self):
+        # url = 'http://thredds-test.unidata.ucar.edu/thredds/dodsC/satellite/VIS/EAST-CONUS_1km/current/EAST-CONUS_1km_VIS_20141231_1915.gini'
+        url = 'static/EAST-CONUS_1km_VIS_20150102_1700.gini.nc'
+        image = readNetCDFRaster(url, 'VIS')
+
+        warped_data = np.zeros((4096, 4096), dtype=np.uint8)
+        warped_image = warpRaster(image, self.crs, warped_data)
+
+        return jsonRaster(warped_image)

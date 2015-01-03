@@ -13,13 +13,28 @@ function Backend() {
 
 function mainLoop(kernel) {
     this.canvas = new ViewCanvas(document.getElementById("canvas"));
+    var that = this;
+    kernel.execute("manager = wave.DataManager(); manager.bounds()",
+        {'output': function(msg_type, content) {
+            // callback for updating the texture with new data
+            logit(msg_type, content)
+            if (msg_type == 'display_data') {
+                var payload = content['data'];
+                var obj = JSON.parse(payload['application/json']);
+                var bounds = obj['bounds'];
+                that.canvas.domain = new Rectangle(bounds[0][0], bounds[0][1],
+                    bounds[1][0], bounds[1][1]);
+                console.log(bounds);
+                console.log(that.canvas.domain);
+                that.canvas.updatedProjection();
+            }
+            var marble = new RasterImageLayer(kernel, 'manager.blueMarble()');
+            that.canvas.layers.push(marble);
 
-    var marble = new RasterImageLayer(kernel, 'wave.blueMarble()');
-    this.canvas.layers.push(marble);
-
-    var satellite = new RasterImageLayer(kernel, 'wave.satellite()');
-    this.canvas.layers.push(satellite)
-    satellite.alpha = 0.6;
+            var satellite = new RasterImageLayer(kernel, 'manager.satellite()');
+            that.canvas.layers.push(satellite)
+            satellite.alpha = 0.6;
+        }});
 
     this.initStats();
     this.tick();

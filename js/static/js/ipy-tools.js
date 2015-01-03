@@ -31,6 +31,7 @@ function logit(msg_type, content) {
         console.log(content['data']);
     } else if (msg_type == 'pyerr') {
         console.error(content['ename'] + ': ' + content['evalue']);
+        console.error(content['traceback'])
     }
 }
 

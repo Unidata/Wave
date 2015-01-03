@@ -1,7 +1,11 @@
 "use strict";
 
 // Class to handle a rectangular bounding box
-function Rectangle () {
+function Rectangle (left, bottom, right, top) {
+    this.left = left;
+    this.right = right;
+    this.bottom = bottom;
+    this.top = top;
 }
 
 Rectangle.prototype.width = function() {
@@ -50,17 +54,8 @@ function ViewCanvas(canvas) {
     this.mvMatrix = mat4.create();
 
     // Set up bounding boxes
-    this.worldCoords = new Rectangle();
-    this.worldCoords.left = -1.0;
-    this.worldCoords.right = 1.0;
-    this.worldCoords.bottom = -1.0;
-    this.worldCoords.top = 1.0;
-
-    this.domain = new Rectangle();
-    this.domain.left = -180.;
-    this.domain.right = 180.;
-    this.domain.bottom = -90.;
-    this.domain.top = 90.;
+    this.worldCoords = new Rectangle(-1.0, -1.0, 1.0, 1.0);
+    this.domain = new Rectangle(-180., -90., 180., 90.);
 
     this.worldScale = 1.0;
 
@@ -171,6 +166,11 @@ ViewCanvas.prototype.shift = function(vec) {
     vec3.add(this.lookAt, this.lookAt, vec);
     this.limitCenter();
     this.matrixChanged = true;
+}
+
+ViewCanvas.prototype.updatedProjection = function() {
+    this.updateWorldScale();
+    this.limitCenter();
 }
 
 ViewCanvas.prototype.limitCenter = function() {
