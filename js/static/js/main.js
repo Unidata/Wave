@@ -34,6 +34,10 @@ function mainLoop(kernel) {
             var satellite = new RasterImageLayer(kernel, 'manager.satellite()');
             that.canvas.layers.push(satellite)
             satellite.alpha = 0.6;
+
+            var satellite = new RasterImageLayer(kernel, 'manager.radar()');
+            that.canvas.layers.push(satellite)
+            satellite.alpha = 1.0;
         }});
 
     this.initStats();

@@ -155,3 +155,14 @@ class DataManager(object):
         warped_image = warpRaster(image, self.crs, warped_data)
 
         return jsonRaster(warped_image)
+
+    @send_back
+    def radar(self):
+        # url = 'http://thredds-test.unidata.ucar.edu/thredds/dodsC/satellite/VIS/EAST-CONUS_1km/current/EAST-CONUS_1km_VIS_20141231_1915.gini'
+        url = 'static/Level3_Composite_n0r_1km_20150102_1700.gini.nc'
+        image = readNetCDFRaster(url, 'Reflectivity')
+
+        warped_data = np.zeros_like(image.data)
+        warped_image = warpRaster(image, self.crs, warped_data)
+
+        return jsonRaster(warped_image)
