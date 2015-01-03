@@ -74,7 +74,6 @@ RasterImageLayer.prototype.initBuffers = function() {
 
 RasterImageLayer.prototype.loadTextureData = function() {
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE,
         this.texture.image);
 
@@ -124,8 +123,8 @@ RasterImageLayer.prototype.loadImageData = function(image) {
     // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     var imgData = new Uint8Array(image.data);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, image.shape[0], image.shape[1],
-        0, gl.LUMINANCE, gl[image.type], imgData);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl[image.format], image.shape[1], image.shape[0],
+        0, gl[image.format], gl[image.type], imgData);
 
     // Wrapping and filtering settings important to supporting non-POT texture
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);

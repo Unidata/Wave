@@ -76,6 +76,7 @@ function ViewCanvas(canvas) {
     // gl.depthFunc(gl.LEQUAL);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 }
 
 ViewCanvas.prototype.initGL = function() {

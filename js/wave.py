@@ -21,7 +21,7 @@ print 'loaded wave'
 # 5) Need a better way to choose size of image returned. This likely needs to be folded in with the code
 #    determining the projection parameters of the warped image, just as done in C++ GDAL API.
 
-ImageInfo = namedtuple('ImageInfo', 'bbox data crs transform')
+ImageInfo = namedtuple('ImageInfo', 'bbox data crs transform format')
 
 def send_back(func):
     from IPython.core.display import JSON, display
@@ -50,11 +50,8 @@ def readGDALRaster(src):
 
         out = np.empty((raster.count,) + raster.shape, dtype=raster.dtypes[0])
         src_proj = Proj(**raster.crs)
-        print raster.affine.to_gdal()
-        print raster.crs
-        print bbox
         return ImageInfo(crs=raster.crs, transform=raster.affine,
-            data=raster.read(out=out), bbox=bbox) #zip(*src_proj(*zip(*bbox), inverse=True)))
+            data=raster.read(out=out), bbox=bbox, format='RGB')
 
 def readNetCDFRaster(src, var):
     with Dataset(src) as nc:
@@ -65,7 +62,9 @@ def readNetCDFRaster(src, var):
                 lat_1=lcc.standard_parallel, lat_2=lcc.standard_parallel,
                 radius=lcc.earth_radius)
 
-        data = nc.variables[var][0, :-1, :-1].astype(np.uint8)
+        data = nc.variables[var][0, :-1, :-1]
+        if data.dtype == np.int8:
+            data.dtype = np.uint8
 
         x = nc.variables['x'][:-1] * 1000.
         lccX = [x[0], x[-1], x[0]]
@@ -76,17 +75,15 @@ def readNetCDFRaster(src, var):
         projBox = [(x[0], y[-1]), (x[0], y[0]), (x[-1], y[-1]), (x[-1], y[0])]
 
         return ImageInfo(crs=src_crs, transform=src_trans, data=data,
-            bbox=projBox)
+            bbox=projBox, format='LUMINANCE')
 
 def warpRaster(imageinfo, dest_crs, dest_image):
     # Convert source bounding box to lon/lat
     src_proj = Proj(**imageinfo.crs)
     projX, projY = zip(*imageinfo.bbox)
     if src_proj.is_latlong():
-        print 'skipping'
         lon,lat = projX, projY
     else:
-        print 'not skipping'
         lon,lat = src_proj(projX, projY, inverse=True)
 
     # Now put lon/lat into destiation CRS
@@ -99,28 +96,26 @@ def warpRaster(imageinfo, dest_crs, dest_image):
     dstMinY = dstY.min()
     dstMaxY = dstY.max()
 
-    print dest_image.shape[-2:][::-1]
-    print lon, lat
     dest_trans = xyToAffine([dstMinX, dstMaxX, dstMinX], [dstMaxY, dstMaxY, dstMinY], dest_image.shape[-2:][::-1])
-    print dest_trans
-    print dstMinX, dstMaxX, dstMinY, dstMaxY
     with rasterio.drivers():
-        if not src_proj.is_latlong():
             warp.reproject(imageinfo.data, dest_image, imageinfo.transform, imageinfo.crs, dest_trans, dest_crs)
-        else:
-            print 'skipping warp'
-            dest_image = imageinfo.data
 
     projBoxX = [dstMinX, dstMinX, dstMaxX, dstMaxX]
     projBoxY = [dstMinY, dstMaxY, dstMinY, dstMaxY]
 
+    # If we have a multi-channel image, roll channels to last dimension
+    if len(dest_image.shape) == 3:
+        dest_image = np.rollaxis(dest_image, 0, 3)
+
     return ImageInfo(crs=dest_crs, transform=dest_trans, data=dest_image,
-        bbox=zip(projBoxX, projBoxY))
+        bbox=zip(projBoxX, projBoxY), format=imageinfo.format)
 
 typeMap = dict(uint8='UNSIGNED_BYTE')
 def jsonRaster(imageinfo):
     arr = imageinfo.data
-    imginfo = dict(data=arr.flatten().tolist(), type=typeMap[arr.dtype.name], shape=arr.shape[::-1])
+    print arr.shape
+    imginfo = dict(data=arr.flatten().tolist(), type=typeMap[arr.dtype.name],
+        shape=arr.shape, format=imageinfo.format)
     return dict(image=imginfo, bbox=imageinfo.bbox)
 
 class DataManager(object):
@@ -143,7 +138,6 @@ class DataManager(object):
 
     @send_back
     def blueMarble(self):
-        # display(Image('static/world.topo.bathy.200406.3x5400x2700.png'))
         image = readGDALRaster('static/world.topo.bathy.200406.3x5400x2700.png')
 
         warped_data = np.zeros_like(image.data)
