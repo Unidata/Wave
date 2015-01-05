@@ -110,7 +110,7 @@ def warpRaster(imageinfo, dest_crs, dest_image):
     return ImageInfo(crs=dest_crs, transform=dest_trans, data=dest_image,
         bbox=zip(projBoxX, projBoxY), format=imageinfo.format)
 
-typeMap = dict(uint8='UNSIGNED_BYTE')
+typeMap = dict(uint8='UNSIGNED_BYTE', float32='FLOAT')
 def jsonRaster(imageinfo):
     arr = imageinfo.data
     print arr.shape
@@ -161,8 +161,10 @@ class DataManager(object):
         # url = 'http://thredds-test.unidata.ucar.edu/thredds/dodsC/satellite/VIS/EAST-CONUS_1km/current/EAST-CONUS_1km_VIS_20141231_1915.gini'
         url = 'static/Level3_Composite_n0r_1km_20150102_1700.gini.nc'
         image = readNetCDFRaster(url, 'Reflectivity')
+        scaled_image = image._replace(data=((image.data + 35) * 2).astype(np.uint8))
+        scaled_image.data[image.data <= -30] = 0
 
-        warped_data = np.zeros_like(image.data)
-        warped_image = warpRaster(image, self.crs, warped_data)
+        warped_data = np.zeros(scaled_image.data.shape, dtype=np.uint8)
+        warped_image = warpRaster(scaled_image, self.crs, warped_data)
 
         return jsonRaster(warped_image)

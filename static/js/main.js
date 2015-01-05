@@ -32,12 +32,13 @@ function mainLoop(kernel) {
             that.canvas.layers.push(marble);
 
             var satellite = new RasterImageLayer(kernel, 'manager.satellite()');
-            that.canvas.layers.push(satellite)
+            that.canvas.layers.push(satellite);
             satellite.alpha = 0.6;
 
-            var satellite = new RasterImageLayer(kernel, 'manager.radar()');
-            that.canvas.layers.push(satellite)
-            satellite.alpha = 1.0;
+            var radar = new RasterImageLayer(kernel, 'manager.radar()');
+            that.canvas.layers.push(radar);
+            radar.alpha = 1.0;
+            radar.genColorMap();
         }});
 
     this.initStats();
