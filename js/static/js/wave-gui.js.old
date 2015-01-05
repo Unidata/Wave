@@ -1,0 +1,53 @@
+"use strict";
+
+$( document ).ready(function() {
+
+var main = function() {
+  console.log( "ready!" );
+  console.log( "get left pannel gui area" );
+  var $guiLeftPannel = $( "#gui-left-pannel" );
+  console.log( "got left pannel gui area" );
+  console.log( "init data-controller widget" );
+  initDataController($guiLeftPannel);
+  console.log( "finished init data-controller widget" );
+};
+
+
+var initDataController = function($guiLeftPannel) {
+  var createTitle = function(title) {
+    var $title = $( document.createElement("h3") );
+    $title.append(document.createTextNode(title));
+    return $title;
+  };
+
+  var createContent = function(content) {
+    var $content = $( document.createElement("p")).append(content);
+    var $contentDiv = $( document.createElement("div") );
+    $contentDiv.append($content);
+    return $contentDiv;
+  };
+
+  var addWidget = function(widget) {
+    var $contentDiv = $( document.createElement("div") );
+    $contentDiv.append(widget);
+    return $contentDiv;
+  };
+
+  var $dc = $( document.createElement("div")).appendTo("body");
+  $dc.attr("id", "data-controller" );
+  $dc.append( createTitle("Satellite") ); 
+  $dc.append( createContent("Sat Stuff" ) );
+
+  $dc.append( createTitle("RADAR") ); 
+  $dc.append( createContent("RAD Stuff" ) );
+
+  $dc.accordion();
+  $dc.accordion( "option", "collapsible", true );
+  $dc.accordion( "option", "active", false );
+  $guiLeftPannel.append($dc);
+
+};
+
+main();
+
+});
