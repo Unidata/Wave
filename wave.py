@@ -148,7 +148,7 @@ class DataManager(object):
     @send_back
     def satellite(self):
         # url = 'http://thredds-test.unidata.ucar.edu/thredds/dodsC/satellite/VIS/EAST-CONUS_1km/current/EAST-CONUS_1km_VIS_20141231_1915.gini'
-        url = 'static/EAST-CONUS_1km_VIS_20150102_1700.gini.nc'
+        url = 'static/EAST-CONUS_1km_VIS_20150116_1915.gini.nc'
         image = readNetCDFRaster(url, 'VIS')
 
         warped_data = np.zeros((4096, 4096), dtype=np.uint8)
@@ -159,7 +159,7 @@ class DataManager(object):
     @send_back
     def radar(self):
         # url = 'http://thredds-test.unidata.ucar.edu/thredds/dodsC/satellite/VIS/EAST-CONUS_1km/current/EAST-CONUS_1km_VIS_20141231_1915.gini'
-        url = 'static/Level3_Composite_n0r_1km_20150102_1700.gini.nc'
+        url = 'static/Level3_Composite_n0r_1km_20150116_1915.gini.nc'
         image = readNetCDFRaster(url, 'Reflectivity')
         scaled_image = image._replace(data=((image.data + 35) * 2).astype(np.uint8))
         scaled_image.data[image.data <= -30] = 0
