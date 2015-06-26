@@ -1,5 +1,5 @@
-import sys
 from PyQt4 import QtGui
+#from siphon.catalog import TDSCatalog
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
 import matplotlib.pyplot as plt
@@ -8,61 +8,78 @@ from metpy.calc import get_wind_components, lcl, dry_lapse, parcel_profile
 from metpy.plots import SkewT
 from metpy.units import units, concatenate
 
-class Window(QtGui.QMainWindow):
-    def __init__(self):
-        super(Window, self).__init__()
+
+class skewt_dialog(QtGui.QDialog):
+    def __init__(self, parent=None):
+        super(skewt_dialog, self).__init__()
+        self.setWindowTitle("Skew-T Menu")
+        self.setGeometry(0, 0, 450, 300)
+        self.move(QtGui.QApplication.desktop().screen().rect().center()- self.rect().center())
+        css = """
+                QWidget{
+                    Background: #4c4c4c;
+                    color:white;
+                    font:14px bold;
+                    font-weight:bold;
+                    border-radius: 1px;
+                }
+
+                QLineEdit{
+                    Background: #666666;
+                    padding: 4px 4px 4px 4px;
+                }
+
+                QComboBox{
+                    Background: #666666;
+                    padding: 4px 4px 4px 4px;
+                }
+
+                QPushButton{
+                    Background: #999999;
+                    padding: 4px 4px 4px 4px;
+                    border-radius: 5px;
+
+                }
+                """
+
+        self.setStyleSheet(css)
+        self.setAutoFillBackground(True)
+        self.setBackgroundRole(QtGui.QPalette.Highlight)
+
+        grid = QtGui.QGridLayout()
+        grid.setSpacing(10)
+        self.setLayout(grid)
 
 
+        self.lbl = QtGui.QLabel("Data Source:", self)
+        grid.addWidget(self.lbl, 0, 0, 1, 1)
+        combo = QtGui.QComboBox(self)
+        combo.addItem("NCSS")
+        grid.addWidget(combo, 0, 1, 1, 1)
 
+        self.lbl = QtGui.QLabel("Latitude:", self)
+        grid.addWidget(self.lbl, 1, 0, 1, 1)
+        latbox = QtGui.QLineEdit(self)
+        grid.addWidget(latbox, 1, 1, 1, 1)
 
+        self.lbl = QtGui.QLabel("Longitude:", self)
+        grid.addWidget(self.lbl, 2, 0, 1, 1)
+        longbox = QtGui.QLineEdit(self)
+        grid.addWidget(longbox, 2, 1, 1, 1)
 
-        # a figure instance to plot on
-        self.figure = plt.figure()
-        # this is the Canvas Widget that displays the `figure`
-        # it takes the `figure` instance as a parameter to __init__
-        self.canvas = FigureCanvas(self.figure)
+        #combo.activated[str].connect(self.onActivated)
+        submit_button = QtGui.QPushButton('Plot')
+        submit_button.clicked.connect(self.plot)
 
-        # this is the Navigation widget
-        # it takes the Canvas widget and a parent
-        #self.toolbar = NavigationToolbar(self.canvas, self)
+        grid.addWidget(submit_button, 3, 0, 1, 3)
 
-        # Just some button connected to `plot` method
-        self.button = QtGui.QPushButton('Plot')
-        self.button.clicked.connect(self.plot)
-        self.statusBar().showMessage('Ready')
-        # set the layout
-        layout = QtGui.QVBoxLayout()
-        #layout.addWidget(self.toolbar)
-        layout.addWidget(self.canvas)
-        layout.addWidget(self.button)
-        self.setLayout(layout)
-        self.initUI()
-
-
-    def initUI(self):
-
-        textEdit = QtGui.QTextEdit()
-        self.setCentralWidget(textEdit)
-
-        exitAction = QtGui.QAction(QtGui.QIcon('exit24.png'), 'Exit', self)
-        exitAction.setShortcut('Ctrl+Q')
-        exitAction.setStatusTip('Exit application')
-        exitAction.triggered.connect(self.close)
-
-        self.statusBar()
-
-        menubar = self.menuBar()
-        fileMenu = menubar.addMenu('&File')
-        fileMenu.addAction(exitAction)
-
-        toolbar = self.addToolBar('Exit')
-        toolbar.addAction(exitAction)
-
-        self.setGeometry(300, 300, 350, 250)
-        self.setWindowTitle('Main window')
         self.show()
 
+    def get_data(self):
+        pass
+
     def plot(self):
+
         p, T, Td, direc, spd = np.loadtxt(open('may3_sounding.txt'),
                 usecols=(0, 2, 3, 6, 7), unpack=True)
         p = p * units.mbar
@@ -105,14 +122,8 @@ class Window(QtGui.QMainWindow):
         skew.plot_moist_adiabats()
         skew.plot_mixing_lines()
 
-        # Show the plot
+        # Discards old graph, works poorly though
+        #skew.ax.hold(False)
 
         # refresh canvas
         self.canvas.draw()
-
-if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
-    main = Window()
-    main.show()
-    sys.exit(app.exec_())
-
