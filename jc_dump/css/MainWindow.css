@@ -1,0 +1,31 @@
+QWidget{
+    Background: #4c4c4c;
+    color:white;
+    font:14px bold;
+    font-weight:bold;
+    border-radius: 1px;
+}
+
+QMenuBar::item {
+    spacing: 3px; /* spacing between menu bar items */
+    padding: 10px 4px 4px 4px;
+    background: transparent;
+    font:16px bold;
+}
+
+QMenuBar::item:selected { /* when selected using mouse or keyboard */
+    background: #666666;
+}
+
+QMenu::item:selected {
+    background: #666666;
+}
+
+QToolButton{
+    Background: transparent;
+    padding: 5px 0px 5px 5px;
+}
+
+QToolButton:hover{
+    Background: #666666;
+}

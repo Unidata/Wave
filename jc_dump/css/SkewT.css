@@ -1,0 +1,24 @@
+QWidget{
+    Background: #4c4c4c;
+    color:white;
+    font:14px bold;
+    font-weight:bold;
+    border-radius: 1px;
+}
+
+QLineEdit{
+    Background: #666666;
+    padding: 4px 4px 4px 4px;
+}
+
+QComboBox{
+    Background: #666666;
+    padding: 4px 4px 4px 4px;
+}
+
+QPushButton{
+    Background: #999999;
+    padding: 4px 4px 4px 4px;
+    border-radius: 5px;
+
+}
