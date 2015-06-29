@@ -1,16 +1,19 @@
 QWidget{
-    Background: #4c4c4c;
-    color:white;
-    font:14px bold;
-    font-weight:bold;
+    Background: #3C3F41;
+    color:#A3A3A4;
+    font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Geneva, Verdana, sans-serif;
+	font-size: 13px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 400;
     border-radius: 1px;
 }
 
 QMenuBar::item {
     spacing: 3px; /* spacing between menu bar items */
-    padding: 10px 4px 4px 4px;
+    padding: 4px 4px 4px 4px;
     background: transparent;
-    font:16px bold;
+    font:14px bold;
 }
 
 QMenuBar::item:selected { /* when selected using mouse or keyboard */

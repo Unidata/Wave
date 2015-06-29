@@ -1,24 +1,28 @@
 QWidget{
-    Background: #4c4c4c;
-    color:white;
-    font:14px bold;
-    font-weight:bold;
+    Background: #3C3F41;
+    color:#A3A3A4;
+    font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Geneva, Verdana, sans-serif;
+    font:13px bold;
+    font-style: normal;
+	font-variant: normal;
+	font-weight: 400;
     border-radius: 1px;
 }
 
 QLineEdit{
-    Background: #666666;
+    Background: #2B2B2B;
     padding: 4px 4px 4px 4px;
 }
 
 QComboBox{
-    Background: #666666;
+    Background: #2B2B2B;
     padding: 4px 4px 4px 4px;
 }
 
 QPushButton{
-    Background: #999999;
-    padding: 4px 4px 4px 4px;
+    Background: #2B2B2B;
+    padding: 8px 8px 8px 8px;
     border-radius: 5px;
-
 }
+
+
