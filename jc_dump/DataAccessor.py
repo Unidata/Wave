@@ -23,7 +23,8 @@ class DataAccessor(object):
         query = ncss.query()
         query.lonlat_point(long, lat).time(datetime.utcnow())
         query.accept('netcdf4')
-        query.variables('Temperature_isobaric', 'Relative_humidity_isobaric')
+        query.variables('Temperature_isobaric', 'Relative_humidity_isobaric', 'u-component_of_wind_isobaric',
+                        'v-component_of_wind_isobaric')
 
         data = ncss.get_data(query)
 
@@ -36,5 +37,14 @@ class DataAccessor(object):
         press = data.variables['isobaric3']
         press_vals = press[:].squeeze()
 
-        return temp_vals, td_vals, press_vals
+        u_wind = data.variables['u-component_of_wind_isobaric']
+        u_wind_vals = u_wind[:].squeeze()
+        print(u_wind_vals)
+
+        v_wind = data.variables['v-component_of_wind_isobaric']
+        v_wind_vals = u_wind[:].squeeze()
+        print(u_wind_vals)
+
+
+        return temp_vals, td_vals, press_vals, u_wind_vals, v_wind_vals
 

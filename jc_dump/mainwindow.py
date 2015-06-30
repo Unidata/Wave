@@ -30,10 +30,18 @@ class Window(QtGui.QMainWindow):
         exit_action.setShortcut('Ctrl+Q')
         exit_action.setStatusTip('Exit application')
         exit_action.triggered.connect(self.close)
+        clear_action = QtGui.QAction(QtGui.QIcon('./img/clear_64px.png'), 'Clear display', self)
+        clear_action.setShortcut('Ctrl+C')
+        clear_action.setStatusTip('Clear the display')
+        clear_action.triggered.connect(self.clear_canvas)
         skewt_action = QtGui.QAction(QtGui.QIcon('./img/skewt_64px.png'), 'Skew-T', self)
         skewt_action.setShortcut('Ctrl+S')
         skewt_action.setStatusTip('Open Skew-T Dialog Box')
         skewt_action.triggered.connect(self.skewt_dialog)
+        radar_action = QtGui.QAction(QtGui.QIcon('./img/radar_64px.png'), 'Radar', self)
+        radar_action.setShortcut('Ctrl+R')
+        radar_action.setStatusTip('Open Radar Dialog Box')
+        radar_action.triggered.connect(self.skewt_dialog)
 
         menubar = self.menuBar()
         menubar.setNativeMenuBar(False)
@@ -41,9 +49,11 @@ class Window(QtGui.QMainWindow):
         editmenu = menubar.addMenu('&Edit')
         filemenu.addAction(exit_action)
 
-        toolbar = self.addToolBar('Exit')
-        toolbar.addAction(exit_action)
-        toolbar.addAction(skewt_action)
+        self.toolbar = QtGui.QToolBar()
+        self.addToolBar(QtCore.Qt.LeftToolBarArea, self.toolbar)
+        self.toolbar.addAction(clear_action)
+        self.toolbar.addAction(skewt_action)
+        self.toolbar.addAction(radar_action)
 
         self.statusBar().showMessage('Ready')
         self.setWindowTitle("WAVE (Skew-T Viewer)")
@@ -59,24 +69,26 @@ class Window(QtGui.QMainWindow):
 
         self.setCentralWidget(self.canvas)
 
-
-
         self.show()
 
     def skewt_dialog(self):
         dialog = SkewTDialog()
         if dialog.exec_():
             source, lat, long = dialog.get_values()
-            t, td, p = DataAccessor.get_sounding(source, lat, long)
-            self.plot(t, td, p)
+            t, td, p, u, v = DataAccessor.get_sounding(source, lat, long)
+            self.plot(t, td, p, u, v)
 
-    def plot(self, t, td, p):
+    def plot(self, t, td, p, u, v):
         t = np.array(t)[::-1]
         td = np.array(td)[::-1]
         p = np.array(p)[::-1]
+        u = np.array(u)[::-1]
+        v = np.array(v)[::-1]
         p = (p * units.pascals).to('mbar')
         t = (t * units.kelvin).to('degC')
         td = td * units.degC
+        u = (u * units.mps).to('knot')
+        v = (v * units.mps).to('knot')
         #spd = spd * units.knot
         #direc = direc * units.deg
 
@@ -116,10 +128,13 @@ class Window(QtGui.QMainWindow):
         skew.plot_mixing_lines()
 
         # Discards old graph, works poorly though
-        # skew.ax.hold(False)
+        #skew.ax.hold(False)
 
         # refresh canvas
         self.canvas.draw()
+
+    def clear_canvas(self):
+        pass
 
 
 def main():
