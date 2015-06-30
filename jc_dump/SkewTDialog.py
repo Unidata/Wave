@@ -1,28 +1,22 @@
 # ==================================================================================================================== #
-# SkewTDialog.py                                                                                                       #
+# MODULE NAME:                                                                                                         #
+#   SkewTDialog.py                                                                                                     #
 #                                                                                                                      #
-# About: This file contains the SkewTDialog class for the skew-t options dialog box.                                   #
+# ABOUT:                                                                                                               #
+#   This file contains the SkewTDialog class for the skew-t options dialog box.                                        #
 #                                                                                                                      #
-# Copyright (c) 2015 Joshua Clark <joclark@ucar.edu> and Ryan May rmay@ucar.edu                                        #
+# COPYRIGHT (c)                                                                                                        #
+#   2015 Joshua Clark <joclark@ucar.edu> and Ryan May rmay@ucar.edu                                                    #
 #                                                                                                                      #
-# LICENSE:                                                                                                             #
-# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated         #
-# documentation files (the "Software"), to deal in the Software without restriction, including without limitation the  #
-# rights to use,copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to       #
-# permit persons to whom the Software is furnished to do so, subject to the following conditions:                      #
+# LICENSE (MIT):                                                                                                       #
+#   See MainWindow.py for full license information.                                                                    #
 #                                                                                                                      #
-# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the #
-# Software.                                                                                                            #
+# CHANGELOG:                                                                                                           #
 #                                                                                                                      #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE #
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS   #
-# OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,WHETHER IN AN ACTION OF CONTRACT, TORT OR   #
-# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.     #
-#                                                                                                                      #
-# Changelog:                                                                                                           #
 #     Date          Engineer        Commit         Changes                                                             #
 #     ----          --------        ------         -------                                                             #
-#    29jun15        Clark                           Class creation, css generation, plot and get_values funcs          #
+#    29jun15        Clark           c916584        Class creation, css generation, plot and get_values funcs           #
+#                                                                                                                      #
 # ==================================================================================================================== #
 
 from PyQt4 import QtGui, QtCore
@@ -30,9 +24,14 @@ from jc_dump.ErrorDialog import ErrorDialog
 
 
 class SkewTDialog(QtGui.QDialog):
+    r"""Creates an instance of the Skew-T Dialog box. Inherits from QDialog"""
 
     def __init__(self):
         super(SkewTDialog, self).__init__()
+        self.interface()
+
+    def interface(self):
+        r""" Contains the Skew-t window interface generation functionality. Commented where needed."""
 
         # Set window title, size, and position on the screen (center)
         self.setWindowTitle("Skew-T Menu")
@@ -83,10 +82,23 @@ class SkewTDialog(QtGui.QDialog):
         # Show the window!
         self.show()
 
-    def plot(self):
+    def set_values(self):
+        r""" Sets the values for data source, latitude, and longitude from user selections. If latitude or longitude is
+        not provided, an ErrorDialog object is given.
+
+        Args:
+            None.
+        Returns:
+            None.
+        Raises:
+            ErrorDialog messagebox if latitude and/or longitude is not provided.
+
+        """
+
         self.source = self.combo.currentText()
         self.lat = self.latbox.text()
         self.long = self.longbox.text()
+
         if not (self.lat and self.long):
             error = ErrorDialog('Latitude and longitude must be specified!')
             error.exec()
@@ -94,6 +106,8 @@ class SkewTDialog(QtGui.QDialog):
             self.accept()
 
     def cancel(self):
+        """ If the user cancels the dialog box, the dialog is destroyed and the main window becomes active."""
+
         self.reject()
 
     def get_values(self):
