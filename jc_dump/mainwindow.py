@@ -64,10 +64,9 @@ class Window(QtGui.QMainWindow):
         self.figure = plt.figure(facecolor='#2B2B2B')
 
         self.canvas = FigureCanvas(self.figure)
-        # Create a grid to position all widgets on (labels, lineedit, combobox, etc)
-        self.mdiArea = QtGui.QMdiArea()
 
         self.setCentralWidget(self.canvas)
+
 
         self.show()
 
@@ -75,10 +74,10 @@ class Window(QtGui.QMainWindow):
         dialog = SkewTDialog()
         if dialog.exec_():
             source, lat, long = dialog.get_values()
-            t, td, p, u, v = DataAccessor.get_sounding(source, lat, long)
-            self.plot(t, td, p, u, v)
+            t, td, p, u, v, lat, long, time = DataAccessor.get_sounding(source, lat, long)
+            self.plot(t, td, p, u, v, lat, long, time)
 
-    def plot(self, t, td, p, u, v):
+    def plot(self, t, td, p, u, v, lat, long, time):
         t = np.array(t)[::-1]
         td = np.array(td)[::-1]
         p = np.array(p)[::-1]
@@ -87,12 +86,12 @@ class Window(QtGui.QMainWindow):
         p = (p * units.pascals).to('mbar')
         t = (t * units.kelvin).to('degC')
         td = td * units.degC
-        u = (u * units.mps).to('knot')
-        v = (v * units.mps).to('knot')
+        u = (u * units('m/s')).to('knot')
+        v = (v * units('m/s')).to('knot')
         #spd = spd * units.knot
         #direc = direc * units.deg
-
         #u, v = get_wind_components(spd, direc)
+
         # Create a new figure. The dimensions here give a good aspect ratio
         skew = SkewT(self.figure, rotation=45)
 
@@ -100,7 +99,7 @@ class Window(QtGui.QMainWindow):
         # log scaling in Y, as dictated by the typical meteorological plot
         skew.plot(p, t, 'r')
         skew.plot(p, td, 'g')
-        #skew.plot_barbs(p, u, v)
+        skew.plot_barbs(p, u, v, barbcolor='#FF0000', flagcolor='#FF0000')
         skew.ax.set_ylim(1000, 100)
         skew.ax.set_xlim(-40, 60)
 
@@ -126,11 +125,16 @@ class Window(QtGui.QMainWindow):
         skew.plot_dry_adiabats()
         skew.plot_moist_adiabats()
         skew.plot_mixing_lines()
+        deg = u'\N{DEGREE SIGN}'
 
+        skew.ax.set_title('Sounding for ' + lat + deg+'N, ' + long + deg + 'W at ' + time + 'z', y=1.02,
+                          color='#A3A3A4')
         # Discards old graph, works poorly though
         #skew.ax.hold(False)
 
         # refresh canvas
+        self.canvas.setMaximumSize(QtCore.QSize(700, 2000))
+
         self.canvas.draw()
 
     def clear_canvas(self):

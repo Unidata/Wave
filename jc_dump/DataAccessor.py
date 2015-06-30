@@ -39,12 +39,9 @@ class DataAccessor(object):
 
         u_wind = data.variables['u-component_of_wind_isobaric']
         u_wind_vals = u_wind[:].squeeze()
-        print(u_wind_vals)
 
         v_wind = data.variables['v-component_of_wind_isobaric']
-        v_wind_vals = u_wind[:].squeeze()
-        print(u_wind_vals)
+        v_wind_vals = v_wind[:].squeeze()
 
-
-        return temp_vals, td_vals, press_vals, u_wind_vals, v_wind_vals
+        return temp_vals, td_vals, press_vals, u_wind_vals, v_wind_vals, lat, long, str(datetime.utcnow())[:-7]
 
