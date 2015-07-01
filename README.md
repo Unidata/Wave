@@ -13,8 +13,7 @@ Anticipated Features:
 
 TO DO LIST:
 
-~~ 1. Layout of submit/cancel button on skew-t dialog needs to be fixed~~
-
+1. ~~Layout of submit/cancel button on skew-t dialog needs to be fixed~~
 2. Error dialog box needs formatting
 3. Attach Qvalidators to lat/long boxes
 4. Use existing matplotlib functions to allow zooming and saving of image
