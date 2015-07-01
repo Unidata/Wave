@@ -96,14 +96,18 @@ class Window(QtGui.QMainWindow):
         menubar.setNativeMenuBar(False)
         filemenu = menubar.addMenu('&File')
         editmenu = menubar.addMenu('&Edit')
+        helpmenu = menubar.addMenu('&Help')
+
         filemenu.addAction(exit_action)
 
         # Create the toolbar, place it on the left of the GUI and add actions to toolbar
         toolbar = QtGui.QToolBar()
         self.addToolBar(QtCore.Qt.LeftToolBarArea, toolbar)
+        toolbar.setMovable(False)
         toolbar.addAction(clear_action)
         toolbar.addAction(skewt_action)
         toolbar.addAction(radar_action)
+        self.setIconSize(QtCore.QSize(30, 30))
 
         # Create the status bar with a default display
         self.statusBar().showMessage('Ready')
@@ -174,7 +178,7 @@ class Window(QtGui.QMainWindow):
         # u, v = get_wind_components(spd, direc)
 
         # Create a new figure. The dimensions here give a good aspect ratio
-        skew = SkewT(self.figure, rotation=45)
+        skew = SkewT(self.figure, rotation=40)
 
         # Plot the data using normal plotting functions, in this case using
         # log scaling in Y, as dictated by the typical meteorological plot
@@ -208,7 +212,7 @@ class Window(QtGui.QMainWindow):
 
         # Set title
         deg = u'\N{DEGREE SIGN}'
-        skew.ax.set_title('Sounding for ' + lat + deg+'N, ' + long + deg + 'W at ' + time + 'z', y=1.02,
+        skew.ax.set_title('Sounding for ' + lat + deg+', ' + long + deg + ' at ' + time + 'z', y=1.02,
                           color='#A3A3A4')
 
         # Discards old graph, works poorly though

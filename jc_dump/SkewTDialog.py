@@ -45,46 +45,68 @@ class SkewTDialog(QtGui.QDialog):
         self.setAutoFillBackground(True)
         self.setBackgroundRole(QtGui.QPalette.Highlight)
 
-        # Create a grid to position all widgets on (labels, lineedit, combobox, etc)
-        grid = QtGui.QGridLayout()
-        grid.setSpacing(10)
-        self.setLayout(grid)
-
         # Label and combobox for data source
-        self.lbl = QtGui.QLabel("Data Source:", self)
-        grid.addWidget(self.lbl, 0, 0, 1, 1)
+        self.datalbl = QtGui.QLabel("Data Source:", self)
         self.combo = QtGui.QComboBox(self)
-        self.combo.addItem("NCSS")
-        grid.addWidget(self.combo, 0, 1, 1, 1)
+        self.combo.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        self.combo.addItem("NCSS (Best/Current)")
 
         # Label and lineedit for latitude
-        self.lbl = QtGui.QLabel("Latitude:", self)
-        grid.addWidget(self.lbl, 1, 0, 1, 1)
+        self.latlbl = QtGui.QLabel("Latitude:", self)
         self.latbox = QtGui.QLineEdit(self)
-        grid.addWidget(self.latbox, 1, 1, 1, 1)
+        validator = QtGui.QDoubleValidator(-90, 90, 0, parent=self.latbox)
+        self.latbox.setValidator(validator)
 
         # Label and lineedit for longitude
-        self.lbl = QtGui.QLabel("Longitude:", self)
-        grid.addWidget(self.lbl, 2, 0, 1, 1)
+        self.longlbl = QtGui.QLabel("Longitude:", self)
         self.longbox = QtGui.QLineEdit(self)
-        grid.addWidget(self.longbox, 2, 1, 1, 1)
+        validator = QtGui.QDoubleValidator(-180, 180, 0, parent=self.longbox)
+        self.longbox.setValidator(validator)
 
         # Submit button
         submit_button = QtGui.QPushButton('Plot')
-        submit_button.clicked.connect(self.plot)
-        grid.addWidget(submit_button, 3, 0, 1, 1, QtCore.Qt.AlignRight)
+        submit_button.setMinimumSize(100, 25)
+        submit_button.clicked.connect(self.set_values)
 
         # Cancel button
         cancel_button = QtGui.QPushButton('Cancel')
+        cancel_button.setMinimumSize(100, 25)
         cancel_button.clicked.connect(self.cancel)
-        grid.addWidget(cancel_button, 3, 1, 1, 1, QtCore.Qt.AlignLeft)
 
+        hbox1 = QtGui.QHBoxLayout()
+        hbox2 = QtGui.QHBoxLayout()
+        hbox3 = QtGui.QHBoxLayout()
+        hbox4 = QtGui.QHBoxLayout()
+
+        hbox1.addWidget(self.datalbl)
+        hbox1.addWidget(self.combo)
+        hbox2.addWidget(self.latlbl)
+        hbox2.addSpacing(22)
+        hbox2.addWidget(self.latbox)
+        hbox3.addWidget(self.longlbl)
+        hbox3.addSpacing(13)
+        hbox3.addWidget(self.longbox)
+        hbox4.addStretch(1)
+        hbox4.addWidget(submit_button)
+        hbox4.addSpacing(10)
+        hbox4.addWidget(cancel_button)
+        hbox4.addStretch(1)
+
+
+        vbox = QtGui.QVBoxLayout()
+        vbox.addLayout(hbox1)
+        vbox.addLayout(hbox2)
+        vbox.addLayout(hbox3)
+        vbox.addLayout(hbox4)
+
+
+        self.setLayout(vbox)
         # Show the window!
         self.show()
 
     def set_values(self):
         r""" Sets the values for data source, latitude, and longitude from user selections. If latitude or longitude is
-        not provided, an ErrorDialog object is given.
+        not provided or rather, the value is invalid, an ErrorDialog object is given.
 
         Args:
             None.
@@ -96,14 +118,16 @@ class SkewTDialog(QtGui.QDialog):
         """
 
         self.source = self.combo.currentText()
-        self.lat = self.latbox.text()
-        self.long = self.longbox.text()
 
-        if not (self.lat and self.long):
-            error = ErrorDialog('Latitude and longitude must be specified!')
-            error.exec()
-        else:
+        if self.latbox.hasAcceptableInput() and self.longbox.hasAcceptableInput():
+            self.lat = self.latbox.text()
+            self.long = self.longbox.text()
             self.accept()
+
+        else:
+            error = ErrorDialog('Invalid lat/long pair. Valid lat values (-90 to 90). Valid long values ' +
+                                '(-180 to 180).')
+            error.exec()
 
     def cancel(self):
         """ If the user cancels the dialog box, the dialog is destroyed and the main window becomes active."""
