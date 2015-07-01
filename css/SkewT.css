@@ -19,6 +19,9 @@ QComboBox{
     padding: 4px 4px 4px 4px;
 }
 
+QComboBox::down-arrow {
+}
+
 QPushButton{
     Background: #2B2B2B;
     padding: 8px 8px 8px 8px;
