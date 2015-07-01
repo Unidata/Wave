@@ -44,8 +44,8 @@ import numpy as np
 from metpy.calc import get_wind_components, lcl, dry_lapse, parcel_profile
 from metpy.plots import SkewT
 from metpy.units import units, concatenate
-from jc_dump.SkewTDialog import SkewTDialog
-from jc_dump.DataAccessor import DataAccessor
+from SkewTDialog import SkewTDialog
+from DataAccessor import DataAccessor
 
 
 class Window(QtGui.QMainWindow):

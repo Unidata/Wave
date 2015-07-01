@@ -19,8 +19,8 @@
 #                                                                                                                      #
 # ==================================================================================================================== #
 
-from PyQt4 import QtGui, QtCore
-from jc_dump.ErrorDialog import ErrorDialog
+from PyQt4 import QtGui
+from ErrorDialog import ErrorDialog
 
 
 class SkewTDialog(QtGui.QDialog):
