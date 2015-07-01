@@ -39,13 +39,31 @@ import sys
 from PyQt4 import QtGui, QtCore
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
 import numpy as np
 from metpy.calc import get_wind_components, lcl, dry_lapse, parcel_profile
 from metpy.plots import SkewT
 from metpy.units import units, concatenate
 from SkewTDialog import SkewTDialog
 from DataAccessor import DataAccessor
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT
+import matplotlib.backends.backend_qt5 as override
+
+
+class MplToolbar(NavigationToolbar2QT):
+    def __init__(self, canvas_, parent_):
+        override.figureoptions = None  # Monkey patched to kill the figure options button on matplotlib toolbar
+
+        self.toolitems = (
+            ('Home', 'Reset original view', 'home', 'home'),
+            ('Back', 'Back to previous view', 'back', 'back'),
+            ('Forward', 'Forward to next view', 'forward', 'forward'),
+            (None, None, None, None),
+            ('Pan', 'Pan axes with left mouse, zoom with right', 'move', 'pan'),
+            ('Zoom', 'Zoom to rectangle', 'zoom_to_rect', 'zoom'),
+            (None, None, None, None),
+            ('Save', 'Save the current image', 'filesave', 'save_figure'),
+            )
+        NavigationToolbar2QT.__init__(self, canvas_, parent_)
 
 
 class Window(QtGui.QMainWindow):
@@ -63,7 +81,7 @@ class Window(QtGui.QMainWindow):
         self.setGeometry(0, 0, screen.width(), screen.height())
 
         # Set the window title and icon
-        self.setWindowTitle("WAVE (Skew-T Viewer)")
+        self.setWindowTitle("WAVE: Weather Analysis and Visualization Environment")
         self.setWindowIcon(QtGui.QIcon('./img/wave_64px.png'))
 
         # Import the stylesheet for this window and set it to the window
@@ -78,13 +96,13 @@ class Window(QtGui.QMainWindow):
         exit_action.setShortcut('Ctrl+Q')
         exit_action.setStatusTip('Exit application')
         exit_action.triggered.connect(self.close)
-        clear_action = QtGui.QAction(QtGui.QIcon('./img/clear_64px.png'), 'Clear display', self)
+        clear_action = QtGui.QAction(QtGui.QIcon('./img/clear_64px.png'), 'Clear the display', self)
         clear_action.setShortcut('Ctrl+C')
         clear_action.setStatusTip('Clear the display')
         clear_action.triggered.connect(self.clear_canvas)
-        skewt_action = QtGui.QAction(QtGui.QIcon('./img/skewt_64px.png'), 'Skew-T', self)
+        skewt_action = QtGui.QAction(QtGui.QIcon('./img/skewt_64px.png'), 'Open the skew-T dialog', self)
         skewt_action.setShortcut('Ctrl+S')
-        skewt_action.setStatusTip('Open Skew-T Dialog Box')
+        skewt_action.setStatusTip('Open the skew-T dialog')
         skewt_action.triggered.connect(self.skewt_dialog)
         radar_action = QtGui.QAction(QtGui.QIcon('./img/radar_64px.png'), 'Radar', self)
         radar_action.setShortcut('Ctrl+R')
@@ -115,6 +133,8 @@ class Window(QtGui.QMainWindow):
         # Figure and canvas widgets that display the figure in the GUI
         self.figure = plt.figure(facecolor='#2B2B2B')
         self.canvas = FigureCanvas(self.figure)
+        self.mpltb = MplToolbar(self.canvas, self)
+        self.addToolBar(QtCore.Qt.TopToolBarArea, self.mpltb)
 
         # Set the figure as the central widget and show the GUI
         self.setCentralWidget(self.canvas)
