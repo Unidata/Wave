@@ -1,9 +1,9 @@
 # ==================================================================================================================== #
 # MODULE NAME:                                                                                                         #
-#   SkewTDialog.py                                                                                                     #
+#   Dialogs.py                                                                                                         #
 #                                                                                                                      #
 # ABOUT:                                                                                                               #
-#   This file contains the SkewTDialog class for the skew-t options dialog box.                                        #
+#   This file contains the dialog box classes.                                                                         #
 #                                                                                                                      #
 # COPYRIGHT (c)                                                                                                        #
 #   2015 Joshua Clark <joclark@ucar.edu> and Ryan May rmay@ucar.edu                                                    #
@@ -20,7 +20,6 @@
 # ==================================================================================================================== #
 
 from PyQt4 import QtGui
-from ErrorDialog import ErrorDialog
 
 
 class SkewTDialog(QtGui.QDialog):
@@ -136,3 +135,110 @@ class SkewTDialog(QtGui.QDialog):
 
     def get_values(self):
         return self.source, self.lat, self.long
+
+
+class RadarDialog(QtGui.QDialog):
+    r"""Creates an instance of the Radar Dialog box. Inherits from QDialog"""
+
+    def __init__(self):
+        super(RadarDialog, self).__init__()
+        self.interface()
+
+    def interface(self):
+        r""" Contains the radar window interface generation functionality. Commented where needed."""
+
+        # Set window title, size, and position on the screen (center)
+        self.setWindowTitle("Radar Menu")
+        self.setGeometry(0, 0, 450, 300)
+        self.move(QtGui.QApplication.desktop().screen().rect().center() - self.rect().center())
+
+        # Load the stylesheet for this window and set to fill the window
+        stylesheet = "css/SkewT.css"
+        with open(stylesheet, "r") as ssh:
+            self.setStyleSheet(ssh.read())
+        self.setAutoFillBackground(True)
+        self.setBackgroundRole(QtGui.QPalette.Highlight)
+
+        # Label and combobox for station ID
+        self.statlbl = QtGui.QLabel("Select a station:", self)
+        self.statcombo = QtGui.QComboBox(self)
+        self.statcombo.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        self.statcombo.addItem('FTG')
+
+        # Label and combobox for product ID
+        self.productlbl = QtGui.QLabel("Select a product:", self)
+        self.prodcombo = QtGui.QComboBox(self)
+        self.prodcombo.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        self.prodcombo.addItem('N0Q')
+
+        # Submit button
+        submit_button1 = QtGui.QPushButton('Get')
+        submit_button1.setMinimumSize(100, 25)
+        submit_button1.clicked.connect(self.set_radarvals)
+
+        # Cancel button
+        cancel_button = QtGui.QPushButton('Cancel')
+        cancel_button.setMinimumSize(100, 25)
+        cancel_button.clicked.connect(self.cancel)
+
+        hbox1 = QtGui.QHBoxLayout()
+        hbox2 = QtGui.QHBoxLayout()
+        hbox3 = QtGui.QHBoxLayout()
+
+        hbox1.addWidget(self.statlbl)
+        hbox1.addWidget(self.statcombo)
+        hbox2.addWidget(self.productlbl)
+        hbox2.addSpacing(22)
+        hbox2.addWidget(self.prodcombo)
+        hbox3.addStretch(1)
+        hbox3.addWidget(submit_button1)
+        hbox3.addSpacing(10)
+        hbox3.addWidget(cancel_button)
+        hbox3.addStretch(1)
+
+        vbox = QtGui.QVBoxLayout()
+        vbox.addLayout(hbox1)
+        vbox.addLayout(hbox2)
+        vbox.addLayout(hbox3)
+
+        self.setLayout(vbox)
+        # Show the window!
+        self.show()
+
+    def set_radarvals(self):
+        r""" Sets the values for data source, latitude, and longitude from user selections. If latitude or longitude is
+        not provided or rather, the value is invalid, an ErrorDialog object is given.
+
+        Args:
+            None.
+        Returns:
+            None.
+        Raises:
+            ErrorDialog messagebox if latitude and/or longitude is not provided.
+
+        """
+
+        self.station = self.statcombo.currentText()
+        self.product = self.prodcombo.currentText()
+        self.accept()
+
+
+    def cancel(self):
+        """ If the user cancels the dialog box, the dialog is destroyed and the main window becomes active."""
+
+        self.reject()
+
+    def get_radarvals(self):
+        return self.station, self.product
+
+
+class ErrorDialog(QtGui.QMessageBox):
+    def __init__(self, message_text):
+        super(ErrorDialog, self).__init__()
+        self.setIcon(QtGui.QMessageBox.Critical)
+        self.ok = self.addButton(QtGui.QMessageBox.Ok)
+        self.setText(message_text)
+        # need to figure out why this QDialog code doesn't work...
+        self.setGeometry(300, 300, 250, 150)
+        self.move(QtGui.QApplication.desktop().screen().rect().center() - self.rect().center())
+        self.setWindowTitle('Error')

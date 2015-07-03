@@ -14,15 +14,9 @@ QMenuBar::item {
     padding: 4px 4px 4px 4px;
     background: transparent;
     font:11px bold;
-    border-bottom: 1px solid #666666;
-}
-
-QStatusBar {
-    border-top: 1px solid #666666;
 }
 
 QToolBar {
-    border-right: 1px solid #666666;
     spacing: 3px; /* spacing between items in the tool bar */
     padding: 4px 4px 4px 4px;
 }
