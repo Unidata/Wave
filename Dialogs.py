@@ -20,6 +20,8 @@
 # ==================================================================================================================== #
 
 from PyQt4 import QtGui
+from siphon.radarserver import RadarServer
+import string
 
 
 class SkewTDialog(QtGui.QDialog):
@@ -90,7 +92,6 @@ class SkewTDialog(QtGui.QDialog):
         hbox4.addSpacing(10)
         hbox4.addWidget(cancel_button)
         hbox4.addStretch(1)
-
 
         vbox = QtGui.QVBoxLayout()
         vbox.addLayout(hbox1)
@@ -163,13 +164,18 @@ class RadarDialog(QtGui.QDialog):
         self.statlbl = QtGui.QLabel("Select a station:", self)
         self.statcombo = QtGui.QComboBox(self)
         self.statcombo.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
-        self.statcombo.addItem('FTG')
+        rs = RadarServer('http://thredds.ucar.edu/thredds/radarServer/nexrad/level3/IDD/')
+        l = [station + ': ' + rs.stations[station][4].title().replace('_', ' ').split('/')[0].strip() for station
+             in rs.stations]
+        l = sorted(l)
+        [self.statcombo.addItem(station) for station in l]
 
         # Label and combobox for product ID
         self.productlbl = QtGui.QLabel("Select a product:", self)
         self.prodcombo = QtGui.QComboBox(self)
         self.prodcombo.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
         self.prodcombo.addItem('N0Q')
+        print(rs.metadata)
 
         # Submit button
         submit_button1 = QtGui.QPushButton('Get')
@@ -217,8 +223,8 @@ class RadarDialog(QtGui.QDialog):
             ErrorDialog messagebox if latitude and/or longitude is not provided.
 
         """
-
-        self.station = self.statcombo.currentText()
+        st = self.statcombo.currentText()
+        self.station = st[:3]
         self.product = self.prodcombo.currentText()
         self.accept()
 
@@ -242,3 +248,5 @@ class ErrorDialog(QtGui.QMessageBox):
         self.setGeometry(300, 300, 250, 150)
         self.move(QtGui.QApplication.desktop().screen().rect().center() - self.rect().center())
         self.setWindowTitle('Error')
+
+
