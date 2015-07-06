@@ -24,15 +24,6 @@
 #   contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings  #
 #   in the software.                                                                                                   #
 #                                                                                                                      #
-# CHANGELOG:                                                                                                           #
-#                                                                                                                      #
-#     Date          Engineer        Commit         Changes                                                             #
-#     ----          --------        ------         -------                                                             #
-#    25jun15        Clark           6e914f5        Class creation, basic plotting example                              #
-#    27jun15        Clark           ad0cdd4        Added CSS                                                           #
-#    28jun15        Clark           c916584        Changed CSS, refactored plot and skewtdialog funcs                  #
-#    30jun15        Clark           d5fe3e7        Added wind plotting, completed SkewT tool                           #
-#                                                                                                                      #
 # ==================================================================================================================== #
 
 import sys
@@ -241,6 +232,7 @@ class Window(QtGui.QMainWindow):
 
         # Discards old graph, works poorly though
         # skew.ax.hold(False)
+        # Figure and canvas widgets that display the figure in the GUI
 
         # set canvas size to display Skew-T appropriately
         self.canvas.setMaximumSize(QtCore.QSize(800, 2000))
@@ -302,7 +294,10 @@ class Window(QtGui.QMainWindow):
         self.canvas.draw()
 
     def clear_canvas(self):
-        pass
+        self.canvas.close()
+        self.figure = plt.figure(facecolor='#2B2B2B')
+        self.canvas = FigureCanvas(self.figure)
+        self.setCentralWidget(self.canvas)
 
 
 def main():

@@ -1,0 +1,17 @@
+QWidget{
+    Background: #3C3F41;
+    color:#A3A3A4;
+    font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Geneva, Verdana, sans-serif;
+    font:15px bold;
+    font-style: normal;
+	font-variant: normal;
+	font-weight: 400;
+    border-radius: 1px;
+    line-height:1.5;
+    }
+
+QPushButton{
+    Background: #2B2B2B;
+    padding: 8px 8px 8px 8px;
+    border-radius: 5px;
+}

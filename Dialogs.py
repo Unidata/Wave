@@ -10,42 +10,51 @@
 #                                                                                                                      #
 # LICENSE (MIT):                                                                                                       #
 #   See MainWindow.py for full license information.                                                                    #
-#                                                                                                                      #
-# CHANGELOG:                                                                                                           #
-#                                                                                                                      #
-#     Date          Engineer        Commit         Changes                                                             #
-#     ----          --------        ------         -------                                                             #
-#    29jun15        Clark           c916584        Class creation, css generation, plot and get_values funcs           #
-#                                                                                                                      #
+#                                                                                                                      ##                                                                                                                      #
 # ==================================================================================================================== #
 
 from PyQt4 import QtGui
 from siphon.radarserver import RadarServer
-import string
 
 
-class SkewTDialog(QtGui.QDialog):
-    r"""Creates an instance of the Skew-T Dialog box. Inherits from QDialog"""
-
+class DialogWindow(QtGui.QDialog):
+    r""" Generic dialog window to serve as parent for other dialogs"""
     def __init__(self):
-        super(SkewTDialog, self).__init__()
-        self.interface()
-
-    def interface(self):
-        r""" Contains the Skew-t window interface generation functionality. Commented where needed."""
-
+        super(DialogWindow, self).__init__()
         # Set window title, size, and position on the screen (center)
-        self.setWindowTitle("Skew-T Menu")
         self.setGeometry(0, 0, 450, 300)
-        self.move(QtGui.QApplication.desktop().screen().rect().center() - self.rect().center())
-
+        self.center_dialog()
         # Load the stylesheet for this window and set to fill the window
-        stylesheet = "css/SkewT.css"
+        stylesheet = "css/Dialog.css"
         with open(stylesheet, "r") as ssh:
             self.setStyleSheet(ssh.read())
         self.setAutoFillBackground(True)
         self.setBackgroundRole(QtGui.QPalette.Highlight)
 
+        # Show the window!
+        self.show()
+
+    def center_dialog(self):
+        r""" Centers the dialog on the screen. Support exists for active window centering for future based off cursor
+        position"""
+
+        frame = self.frameGeometry()
+        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
+        center = QtGui.QApplication.desktop().screenGeometry(screen).center()
+        frame.moveCenter(center)
+        self.move(frame.topLeft())
+
+    def cancel(self):
+        """ If the user cancels the dialog box, the dialog is destroyed and the main window becomes active."""
+
+        self.reject()
+
+
+class SkewTDialog(DialogWindow):
+    r"""Creates an instance of the Skew-T Dialog box. Inherits from DialogWindow"""
+    def __init__(self):
+        super(SkewTDialog, self).__init__()
+        self.setWindowTitle('Skew-T Menu')
         # Label and combobox for data source
         self.datalbl = QtGui.QLabel("Data Source:", self)
         self.combo = QtGui.QComboBox(self)
@@ -99,10 +108,7 @@ class SkewTDialog(QtGui.QDialog):
         vbox.addLayout(hbox3)
         vbox.addLayout(hbox4)
 
-
         self.setLayout(vbox)
-        # Show the window!
-        self.show()
 
     def set_values(self):
         r""" Sets the values for data source, latitude, and longitude from user selections. If latitude or longitude is
@@ -125,40 +131,22 @@ class SkewTDialog(QtGui.QDialog):
             self.accept()
 
         else:
-            error = ErrorDialog('Invalid lat/long pair. Valid lat values (-90 to 90). Valid long values ' +
-                                '(-180 to 180).')
+            error = ErrorDialog('Invalid lat/long pair. Valid lat values are -90 to 90 and valid long values ' +
+                                'are -180 to 180.')
             error.exec()
-
-    def cancel(self):
-        """ If the user cancels the dialog box, the dialog is destroyed and the main window becomes active."""
-
-        self.reject()
 
     def get_values(self):
         return self.source, self.lat, self.long
 
 
-class RadarDialog(QtGui.QDialog):
-    r"""Creates an instance of the Radar Dialog box. Inherits from QDialog"""
+class RadarDialog(DialogWindow):
+    r"""Creates an instance of the Radar Dialog box. Inherits from DialogWindow"""
 
     def __init__(self):
         super(RadarDialog, self).__init__()
-        self.interface()
-
-    def interface(self):
-        r""" Contains the radar window interface generation functionality. Commented where needed."""
 
         # Set window title, size, and position on the screen (center)
         self.setWindowTitle("Radar Menu")
-        self.setGeometry(0, 0, 450, 300)
-        self.move(QtGui.QApplication.desktop().screen().rect().center() - self.rect().center())
-
-        # Load the stylesheet for this window and set to fill the window
-        stylesheet = "css/SkewT.css"
-        with open(stylesheet, "r") as ssh:
-            self.setStyleSheet(ssh.read())
-        self.setAutoFillBackground(True)
-        self.setBackgroundRole(QtGui.QPalette.Highlight)
 
         # Label and combobox for station ID
         self.statlbl = QtGui.QLabel("Select a station:", self)
@@ -174,8 +162,9 @@ class RadarDialog(QtGui.QDialog):
         self.productlbl = QtGui.QLabel("Select a product:", self)
         self.prodcombo = QtGui.QComboBox(self)
         self.prodcombo.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
-        self.prodcombo.addItem('N0Q')
-        print(rs.metadata)
+        p = [product.split('/')[1] + ' (' + product[0:3] + ')' for product in rs.metadata['variables']]
+        p = sorted(p)
+        [self.prodcombo.addItem(product) for product in p]
 
         # Submit button
         submit_button1 = QtGui.QPushButton('Get')
@@ -208,8 +197,6 @@ class RadarDialog(QtGui.QDialog):
         vbox.addLayout(hbox3)
 
         self.setLayout(vbox)
-        # Show the window!
-        self.show()
 
     def set_radarvals(self):
         r""" Sets the values for data source, latitude, and longitude from user selections. If latitude or longitude is
@@ -225,14 +212,9 @@ class RadarDialog(QtGui.QDialog):
         """
         st = self.statcombo.currentText()
         self.station = st[:3]
-        self.product = self.prodcombo.currentText()
+        pr = self.prodcombo.currentText()
+        self.product = pr.split('(')[1][:-1]
         self.accept()
-
-
-    def cancel(self):
-        """ If the user cancels the dialog box, the dialog is destroyed and the main window becomes active."""
-
-        self.reject()
 
     def get_radarvals(self):
         return self.station, self.product
@@ -248,5 +230,10 @@ class ErrorDialog(QtGui.QMessageBox):
         self.setGeometry(300, 300, 250, 150)
         self.move(QtGui.QApplication.desktop().screen().rect().center() - self.rect().center())
         self.setWindowTitle('Error')
-
+        # Load the stylesheet for this window and set to fill the window
+        stylesheet = "css/ErrorDialog.css"
+        with open(stylesheet, "r") as ssh:
+            self.setStyleSheet(ssh.read())
+        self.setAutoFillBackground(True)
+        self.setBackgroundRole(QtGui.QPalette.Highlight)
 
